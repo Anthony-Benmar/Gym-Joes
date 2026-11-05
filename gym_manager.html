@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joe's Gym Calca | Panel de Gestión</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#09090b',
+                        cardbg: '#141416',
+                        cardhover: '#1b1b1f',
+                        bordercolor: '#27272a',
+                        gold: '#d4af37',
+                        goldhover: '#c59b27',
+                        goldlight: '#f3d78f',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #09090b; color: #f4f4f5; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+        .gold-gradient { background: linear-gradient(135deg, #f3d78f 0%, #d4af37 50%, #aa8228 100%); }
+        .gold-text { background: linear-gradient(135deg, #f3d78f 0%, #d4af37 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-gold selection:text-black">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- SIDEBAR -->
+        <aside class="w-64 bg-cardbg border-r border-bordercolor flex flex-col shrink-0 select-none">
+            <div class="p-6 border-b border-bordercolor flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gold/10 border border-gold/30 flex items-center justify-center text-gold shadow-lg shadow-gold/5">
+                    <i data-lucide="crown" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base tracking-tight text-white flex items-center gap-1.5">
+                        JOE'S <span class="gold-text">GYM CALCA</span>
+                    </h1>
+                    <p class="text-[11px] text-zinc-400 font-medium tracking-wide">Panel de administración</p>
+                </div>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto" id="sidebar-nav">
+                <!-- Dynamically rendered based on permissions -->
+            </nav>
+
+            <div class="p-4 border-t border-bordercolor space-y-3">
+                <!-- User Profile / Role Switcher -->
+                <div class="bg-zinc-900/80 rounded-xl p-3 border border-bordercolor flex items-center justify-between">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div id="current-user-avatar" class="w-8 h-8 rounded-lg bg-gold/20 text-gold font-bold text-xs flex items-center justify-center shrink-0 border border-gold/30">
+                            AD
+                        </div>
+                        <div class="min-w-0">
+                            <p id="current-user-name" class="text-xs font-semibold text-white truncate">Mariano CEO</p>
+                            <p id="current-user-role" class="text-[10px] text-gold truncate">Dueño / Administrador</p>
+                        </div>
+                    </div>
+                    <button onclick="openRoleModal()" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors" title="Cambiar Sesión / Rol">
+                        <i data-lucide="repeat" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-zinc-400 px-1">
+                    <span>Caja: <strong class="text-emerald-400">Abierta</strong></span>
+                    <button onclick="resetDataModal()" class="text-zinc-500 hover:text-red-400 transition-colors text-[11px] flex items-center gap-1">
+                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Fábrica
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <!-- TOPBAR -->
+            <header class="h-16 bg-cardbg border-b border-bordercolor px-6 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-4 flex-1 max-w-md">
+                    <div class="relative w-full">
+                        <i data-lucide="search" class="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="global-search" oninput="handleGlobalSearch(this.value)" placeholder="Buscar socios, productos, transacciones..." class="w-full bg-zinc-900/80 border border-bordercolor rounded-lg pl-9 pr-4 py-2 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-gold">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="switchView('checkin')" class="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-bordercolor text-zinc-300 hover:text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-2">
+                        <i data-lucide="qr-code" class="w-4 h-4 text-gold"></i>
+                        Check-in Socios
+                    </button>
+                    <button onclick="switchView('pos')" class="px-3.5 py-1.5 bg-gold hover:bg-goldhover text-black font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 shadow-md shadow-gold/10">
+                        <i data-lucide="zap" class="w-4 h-4"></i>
+                        Venta Mostrador
+                    </button>
+                </div>
+            </header>
+
+            <!-- VIEW CONTAINER -->
+            <main class="flex-1 overflow-y-auto p-6 bg-darkbg">
+
+                <!-- VIEW A: DASHBOARD -->
+                <section id="view-dashboard" class="space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold tracking-tight text-white">Panel Gerencial</h2>
+                            <p class="text-sm text-zinc-400">Métricas financieras, rendimiento de ventas y control operativo.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="openMemberModal()" class="px-4 py-2 bg-gold hover:bg-goldhover text-black font-semibold text-sm rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                Nuevo Socio
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- KPI CARDS -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-cardbg border border-bordercolor rounded-xl p-5 shadow-sm">
+                            <div class="flex items-center justify-between text-zinc-400 mb-2">
+                                <span class="text-xs font-medium uppercase tracking-wider">Ingresos acumulados</span>
+                                <div class="w-8 h-8 rounded-lg bg-gold/10 text-gold flex items-center justify-center border border-gold/20">
+                                    <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-baseline justify-between">
+                                <h3 class="text-2xl font-bold text-white" id="kpi-ingresos">$0.00</h3>
+                                <span class="text-xs font-medium text-zinc-400">Histórico total</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-cardbg border border-bordercolor rounded-xl p-5 shadow-sm">
+                            <div class="flex items-center justify-between text-zinc-400 mb-2">
+                                <span class="text-xs font-medium uppercase tracking-wider">Socios Activos</span>
+                                <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
+                                    <i data-lucide="users" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-baseline justify-between">
+                                <h3 class="text-2xl font-bold text-white" id="kpi-socios-activos">0</h3>
+                                <span class="text-xs text-zinc-400" id="kpi-socios-total">Total: 0</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-cardbg border border-bordercolor rounded-xl p-5 shadow-sm">
+                            <div class="flex items-center justify-between text-zinc-400 mb-2">
+                                <span class="text-xs font-medium uppercase tracking-wider">Por vencer</span>
+                                <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+                                    <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-baseline justify-between">
+                                <h3 class="text-2xl font-bold text-white" id="kpi-por-vencer">0</h3>
+                                <span class="text-xs font-medium text-amber-400">Renovaciones</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-cardbg border border-bordercolor rounded-xl p-5 shadow-sm">
+                            <div class="flex items-center justify-between text-zinc-400 mb-2">
+                                <span class="text-xs font-medium uppercase tracking-wider">Alertas Stock Bajo</span>
+                                <div class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center border border-red-500/20">
+                                    <i data-lucide="package" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-baseline justify-between">
+                                <h3 class="text-2xl font-bold text-white" id="kpi-stock-bajo">0</h3>
+                                <span class="text-xs font-medium text-red-400">Reabastecer</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RECENT TRANSACTIONS TABLE -->
+                    <div class="bg-cardbg border border-bordercolor rounded-xl overflow-hidden shadow-sm">
+                        <div class="px-6 py-4 border-b border-bordercolor flex items-center justify-between">
+                            <h3 class="font-semibold text-white text-sm">Últimas Transacciones Registradas</h3>
+                            <div class="flex items-center gap-4">
+                                <button onclick="exportTransactionsCsv()" class="text-xs text-zinc-300 hover:text-white font-medium">Exportar CSV</button>
+                                <button onclick="switchView('pos')" class="text-xs text-gold hover:underline font-medium">Ir al POS</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-zinc-900/60 text-zinc-400 uppercase text-[11px] font-semibold tracking-wider border-b border-bordercolor">
+                                    <tr>
+                                        <th class="px-6 py-3">ID / Hora</th>
+                                        <th class="px-6 py-3">Concepto / Detalle</th>
+                                        <th class="px-6 py-3">Atendido por</th>
+                                        <th class="px-6 py-3">Método Pago</th>
+                                        <th class="px-6 py-3 text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboard-transactions-body" class="divide-y divide-bordercolor text-zinc-300">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW B: MEMBERS -->
+                <section id="view-members" class="space-y-6 hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold tracking-tight text-white">Gestión de Socios & Atletas</h2>
+                            <p class="text-sm text-zinc-400">Directorio de miembros, control de planes y membresías.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="exportMembersCsv()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-bordercolor text-zinc-300 text-xs font-medium rounded-lg flex items-center gap-2">
+                                <i data-lucide="download" class="w-4 h-4"></i> Exportar CSV
+                            </button>
+                            <button onclick="openMemberModal()" class="px-4 py-2 bg-gold hover:bg-goldhover text-black font-semibold text-sm rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                Nuevo Socio
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filters and Search -->
+                    <div class="bg-cardbg border border-bordercolor rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-sm">
+                        <div class="relative w-full sm:w-80">
+                            <i data-lucide="search" class="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" id="member-search" oninput="renderMembers()" placeholder="Buscar por nombre, teléfono o DNI..." class="w-full bg-zinc-900 border border-bordercolor rounded-lg pl-9 pr-4 py-2 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-gold">
+                        </div>
+                        <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                            <button onclick="setMemberFilter('all')" id="filter-member-all" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-white border border-bordercolor transition-colors">Todos</button>
+                            <button onclick="setMemberFilter('active')" id="filter-member-active" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor transition-colors">Activos</button>
+                            <button onclick="setMemberFilter('expiring')" id="filter-member-expiring" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor transition-colors">Por Vencer</button>
+                            <button onclick="setMemberFilter('expired')" id="filter-member-expired" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor transition-colors">Vencidos</button>
+                        </div>
+                    </div>
+
+                    <!-- Members Table -->
+                    <div class="bg-cardbg border border-bordercolor rounded-xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-zinc-900/60 text-zinc-400 uppercase text-[11px] font-semibold tracking-wider border-b border-bordercolor">
+                                    <tr>
+                                        <th class="px-6 py-3">Socio</th>
+                                        <th class="px-6 py-3">DNI</th>
+                                        <th class="px-6 py-3">Teléfono</th>
+                                        <th class="px-6 py-3">Plan</th>
+                                        <th class="px-6 py-3">Inicio</th>
+                                        <th class="px-6 py-3">Vencimiento</th>
+                                        <th class="px-6 py-3">Estado</th>
+                                        <th class="px-6 py-3 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="members-table-body" class="divide-y divide-bordercolor text-zinc-300">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW C: INVENTORY -->
+                <section id="view-inventory" class="space-y-6 hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold tracking-tight text-white">Inventario & Almacén</h2>
+                            <p class="text-sm text-zinc-400">Control de suplementos, bebidas, snacks y merchandising.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="exportInventoryCsv()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-bordercolor text-zinc-300 text-xs font-medium rounded-lg flex items-center gap-2">
+                                <i data-lucide="download" class="w-4 h-4"></i> Exportar CSV
+                            </button>
+                            <button onclick="openProductModal()" class="px-4 py-2 bg-gold hover:bg-goldhover text-black font-semibold text-sm rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                Nuevo Producto
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Categories Tabs & Search -->
+                    <div class="bg-cardbg border border-bordercolor rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-sm">
+                        <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0" id="inventory-categories">
+                            <button onclick="setInventoryCategory('all')" id="cat-all" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-white border border-bordercolor transition-colors whitespace-nowrap">Todos</button>
+                            <button onclick="setInventoryCategory('Proteínas y Ganadores')" id="cat-prot" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor transition-colors whitespace-nowrap">Proteínas</button>
+                            <button onclick="setInventoryCategory('Creatinas y Pre-entrenos')" id="cat-creat" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor transition-colors whitespace-nowrap">Creatinas & Pre-entrenos</button>
+                            <button onclick="setInventoryCategory('Bebidas e Hidratantes')" id="cat-beb" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor transition-colors whitespace-nowrap">Bebidas</button>
+                            <button onclick="setInventoryCategory('Snacks y Alimentos')" id="cat-snack" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor transition-colors whitespace-nowrap">Snacks</button>
+                            <button onclick="setInventoryCategory('Accesorios / Merch')" id="cat-acc" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor transition-colors whitespace-nowrap">Accesorios</button>
+                        </div>
+                        <div class="relative w-full sm:w-64">
+                            <i data-lucide="search" class="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" id="inventory-search" oninput="renderInventory()" placeholder="Buscar producto..." class="w-full bg-zinc-900 border border-bordercolor rounded-lg pl-9 pr-4 py-2 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-gold">
+                        </div>
+                        <label class="flex items-center gap-2 text-xs text-zinc-300 whitespace-nowrap">
+                            <input type="checkbox" id="inventory-low-stock" onchange="renderInventory()" class="accent-yellow-500">
+                            Solo stock bajo
+                        </label>
+                    </div>
+
+                    <!-- Inventory Table -->
+                    <div class="bg-cardbg border border-bordercolor rounded-xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-zinc-900/60 text-zinc-400 uppercase text-[11px] font-semibold tracking-wider border-b border-bordercolor">
+                                    <tr>
+                                        <th class="px-6 py-3">Producto</th>
+                                        <th class="px-6 py-3">Categoría</th>
+                                        <th class="px-6 py-3">Costo</th>
+                                        <th class="px-6 py-3">Precio Venta</th>
+                                        <th class="px-6 py-3">Stock Actual</th>
+                                        <th class="px-6 py-3">Mínimo</th>
+                                        <th class="px-6 py-3 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-table-body" class="divide-y divide-bordercolor text-zinc-300">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="bg-cardbg border border-bordercolor rounded-xl overflow-hidden shadow-sm">
+                        <div class="px-5 py-4 border-b border-bordercolor flex items-center justify-between">
+                            <div>
+                                <h3 class="font-semibold text-white text-sm">Movimientos recientes de stock</h3>
+                                <p class="text-xs text-zinc-500 mt-1">Entradas, ajustes manuales y salidas por venta.</p>
+                            </div>
+                            <button onclick="exportStockMovementsCsv()" class="text-xs text-gold hover:underline font-medium">Exportar movimientos</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-zinc-900/60 text-zinc-400 uppercase tracking-wider border-b border-bordercolor">
+                                    <tr><th class="px-5 py-3">Fecha</th><th class="px-5 py-3">Producto</th><th class="px-5 py-3">Movimiento</th><th class="px-5 py-3">Cantidad</th><th class="px-5 py-3">Responsable</th></tr>
+                                </thead>
+                                <tbody id="stock-movements-body" class="divide-y divide-bordercolor text-zinc-300"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW D: POS / MOSTRADOR -->
+                <section id="view-pos" class="space-y-6 hidden h-[calc(100vh-7rem)]">
+                    <div class="flex items-center justify-between shrink-0">
+                        <div>
+                            <h2 class="text-2xl font-bold tracking-tight text-white">POS Mostrador</h2>
+                            <p class="text-sm text-zinc-400">Punto de venta rápido para cafetería, suplementos y cobros.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium rounded-lg">Caja Activa</span>
+                        </div>
+                    </div>
+
+                    <!-- POS Grid & Ticket Layout -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-13rem)]">
+                        <!-- Left: Products Grid -->
+                        <div class="lg:col-span-7 bg-cardbg border border-bordercolor rounded-xl p-5 flex flex-col h-full overflow-hidden shadow-sm">
+                            <div class="flex flex-col sm:flex-row gap-3 items-center justify-between mb-4 shrink-0">
+                                <div class="relative w-full sm:w-64">
+                                    <i data-lucide="search" class="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                                    <input type="text" id="pos-search" oninput="renderPosProducts()" placeholder="Buscar producto..." class="w-full bg-zinc-900 border border-bordercolor rounded-lg pl-9 pr-4 py-1.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-gold">
+                                </div>
+                                <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto text-xs" id="pos-cat-filter">
+                                    <button onclick="setPosCategory('all')" id="pos-cat-all" class="px-2.5 py-1 rounded-md bg-zinc-800 text-white border border-bordercolor whitespace-nowrap">Todo</button>
+                                    <button onclick="setPosCategory('Proteínas y Ganadores')" id="pos-cat-prot" class="px-2.5 py-1 rounded-md bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor whitespace-nowrap">Proteínas</button>
+                                    <button onclick="setPosCategory('Creatinas y Pre-entrenos')" id="pos-cat-creat" class="px-2.5 py-1 rounded-md bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor whitespace-nowrap">Creatinas</button>
+                                    <button onclick="setPosCategory('Bebidas e Hidratantes')" id="pos-cat-beb" class="px-2.5 py-1 rounded-md bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor whitespace-nowrap">Bebidas</button>
+                                    <button onclick="setPosCategory('Snacks y Alimentos')" id="pos-cat-snack" class="px-2.5 py-1 rounded-md bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor whitespace-nowrap">Snacks</button>
+                                    <button onclick="setPosCategory('Accesorios / Merch')" id="pos-cat-acc" class="px-2.5 py-1 rounded-md bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor whitespace-nowrap">Accesorios</button>
+                                </div>
+                            </div>
+
+                            <div class="flex-1 overflow-y-auto pr-1">
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="pos-products-grid">
+                                    <!-- Injected via JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Cart / Ticket -->
+                        <div class="lg:col-span-5 bg-cardbg border border-bordercolor rounded-xl p-5 flex flex-col h-full shadow-sm">
+                            <div class="flex items-center justify-between pb-3 border-b border-bordercolor shrink-0">
+                                <h3 class="font-semibold text-white text-sm flex items-center gap-2">
+                                    <i data-lucide="receipt" class="w-4 h-4 text-gold"></i> Ticket de Venta
+                                </h3>
+                                <button onclick="clearCart()" class="text-xs text-zinc-400 hover:text-red-400 transition-colors">Limpiar</button>
+                            </div>
+
+                            <div class="flex-1 overflow-y-auto divide-y divide-bordercolor py-2" id="pos-cart-items">
+                                <div class="h-full flex flex-col items-center justify-center text-zinc-500 text-center py-12">
+                                    <i data-lucide="shopping-cart" class="w-10 h-10 mb-2 opacity-40"></i>
+                                    <p class="text-sm">El ticket está vacío</p>
+                                    <p class="text-xs text-zinc-600">Haz clic en los productos para agregarlos</p>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-bordercolor pt-4 shrink-0 space-y-3">
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-medium text-zinc-400">Método de Pago</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <button onclick="setPaymentMethod('Efectivo')" id="pay-efectivo" class="py-2 px-3 rounded-lg text-xs font-medium bg-gold text-black font-semibold border border-gold transition-colors">Efectivo</button>
+                                        <button onclick="setPaymentMethod('Transferencia')" id="pay-transfer" class="py-2 px-3 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 border border-bordercolor hover:text-white transition-colors">Yape / Plin</button>
+                                        <button onclick="setPaymentMethod('Tarjeta')" id="pay-card" class="py-2 px-3 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 border border-bordercolor hover:text-white transition-colors">Tarjeta</button>
+                                    </div>
+                                </div>
+
+                                <div class="bg-zinc-900/60 p-3 rounded-lg border border-bordercolor space-y-1.5 text-sm">
+                                    <div class="flex justify-between text-zinc-400">
+                                        <span>Subtotal</span>
+                                        <span id="cart-subtotal">$0.00</span>
+                                    </div>
+                                    <div class="flex justify-between text-zinc-400">
+                                        <span>IGV / Impuestos (0%)</span>
+                                        <span>$0.00</span>
+                                    </div>
+                                    <div class="flex justify-between text-white font-bold text-base pt-1.5 border-t border-bordercolor">
+                                        <span>Total a Pagar</span>
+                                        <span id="cart-total" class="text-gold">$0.00</span>
+                                    </div>
+                                </div>
+
+                                <button onclick="checkoutCart()" class="w-full py-3 bg-gold hover:bg-goldhover text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2 shadow-md shadow-gold/10 text-sm">
+                                    <i data-lucide="check-circle" class="w-4 h-4"></i> Confirmar Venta y Cobrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW E: CHECK-IN ASISTENCIA -->
+                <section id="view-checkin" class="space-y-6 hidden max-w-3xl mx-auto">
+                    <div class="text-center space-y-2">
+                        <div class="w-14 h-14 rounded-2xl bg-gold/10 border border-gold/30 text-gold flex items-center justify-center mx-auto shadow-lg shadow-gold/5">
+                            <i data-lucide="scan-line" class="w-7 h-7"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold tracking-tight text-white">Control de Asistencia & Check-in</h2>
+                        <p class="text-sm text-zinc-400">Escanea el código o busca al socio para validar acceso al gimnasio.</p>
+                    </div>
+
+                    <div class="bg-cardbg border border-bordercolor rounded-2xl p-6 shadow-xl space-y-6">
+                        <div class="relative">
+                            <i data-lucide="search" class="w-5 h-5 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" id="checkin-input" oninput="handleCheckinSearch(this.value)" placeholder="Nombre, teléfono, DNI o escanea su QR..." class="w-full bg-zinc-900 border border-bordercolor rounded-xl pl-12 pr-4 py-3.5 text-base text-white placeholder-zinc-500 focus:outline-none focus:border-gold">
+                        </div>
+
+                        <div id="checkin-results" class="space-y-3">
+                            <div class="text-center py-12 text-zinc-500 text-sm">
+                                Comienza a escribir para buscar socios y registrar su asistencia.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW F: VALIDAR PAGOS / SUSCRIPCIONES PENDIENTES -->
+                <section id="view-subscriptions" class="space-y-6 hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold tracking-tight text-white">Validación de Pagos & Suscripciones Web</h2>
+                            <p class="text-sm text-zinc-400">Aprueba o rechaza los depósitos enviados por los clientes desde el portal web.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-cardbg border border-bordercolor rounded-xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-zinc-900/60 text-zinc-400 uppercase text-[11px] font-semibold tracking-wider border-b border-bordercolor">
+                                    <tr>
+                                        <th class="px-6 py-3">Cliente / DNI</th>
+                                        <th class="px-6 py-3">Plan Solicitado</th>
+                                        <th class="px-6 py-3">Nº Operación / Voucher</th>
+                                        <th class="px-6 py-3">Fecha</th>
+                                        <th class="px-6 py-3">Monto</th>
+                                        <th class="px-6 py-3 text-right">Acciones de Aprobación</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subscriptions-table-body" class="divide-y divide-bordercolor text-zinc-300">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="bg-cardbg border border-bordercolor rounded-xl overflow-hidden shadow-sm">
+                        <div class="px-5 py-4 border-b border-bordercolor">
+                            <h3 class="font-semibold text-white text-sm">Historial de validaciones</h3>
+                            <p class="text-xs text-zinc-500 mt-1">Estado y observaciones visibles para los socios desde su portal.</p>
+                            <button onclick="exportPaymentHistoryCsv()" class="mt-3 text-xs text-gold hover:underline font-medium">Exportar historial CSV</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-zinc-900/60 text-zinc-400 uppercase tracking-wider border-b border-bordercolor">
+                                    <tr><th class="px-5 py-3">Cliente / DNI</th><th class="px-5 py-3">Plan</th><th class="px-5 py-3">Fecha</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3">Observación</th></tr>
+                                </thead>
+                                <tbody id="payment-history-body" class="divide-y divide-bordercolor text-zinc-300"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-classes" class="space-y-6 hidden">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight text-white">Clases y reservas</h2>
+                        <p class="text-sm text-zinc-400">Revisa las reservas enviadas desde el portal de socios.</p>
+                    </div>
+                    <div class="bg-cardbg border border-bordercolor rounded-xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-zinc-900/60 text-zinc-400 uppercase text-[11px] font-semibold tracking-wider border-b border-bordercolor">
+                                    <tr><th class="px-5 py-3">Socio / DNI</th><th class="px-5 py-3">Clase</th><th class="px-5 py-3">Horario</th><th class="px-5 py-3">Reserva</th><th class="px-5 py-3 text-right">Acciones</th></tr>
+                                </thead>
+                                <tbody id="class-bookings-body" class="divide-y divide-bordercolor text-zinc-300"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW G: USERS MANAGEMENT (ADMIN ONLY) -->
+                <section id="view-users" class="space-y-6 hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold tracking-tight text-white">Gestión de Usuarios & Permisos (RBAC)</h2>
+                            <p class="text-sm text-zinc-400">Administra cuentas del personal, dueños y recepcionistas.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="openUserModal()" class="px-4 py-2 bg-gold hover:bg-goldhover text-black font-semibold text-sm rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                Nuevo Usuario
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-cardbg border border-bordercolor rounded-xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-zinc-900/60 text-zinc-400 uppercase text-[11px] font-semibold tracking-wider border-b border-bordercolor">
+                                    <tr>
+                                        <th class="px-6 py-3">Usuario / Nombre</th>
+                                        <th class="px-6 py-3">Username</th>
+                                        <th class="px-6 py-3">Rol del Sistema</th>
+                                        <th class="px-6 py-3">Estado</th>
+                                        <th class="px-6 py-3 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body" class="divide-y divide-bordercolor text-zinc-300">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL: MEMBER ADD/EDIT -->
+    <div id="member-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardbg border border-bordercolor rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div class="px-6 py-4 border-b border-bordercolor flex items-center justify-between">
+                <h3 id="member-modal-title" class="font-bold text-white text-base">Registrar Nuevo Socio</h3>
+                <button onclick="closeMemberModal()" class="text-zinc-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="member-form" onsubmit="saveMember(event)" class="p-6 space-y-4">
+                <input type="hidden" id="member-id">
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Nombre Completo</label>
+                    <input type="text" id="member-name" required class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">DNI</label>
+                        <input type="text" id="member-dni" inputmode="numeric" maxlength="12" pattern="[0-9]{8,12}" class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold" placeholder="Documento de identidad">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Teléfono</label>
+                        <input type="text" id="member-phone" required class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Tipo de Plan</label>
+                        <select id="member-plan" class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                            <option value="Pase Diario">Pase Diario (1 Día)</option>
+                            <option value="Plan Mensual">Plan Mensual (30 Días)</option>
+                            <option value="Plan Trimestral">Plan Trimestral (90 Días)</option>
+                            <option value="Plan Semestral">Plan Semestral (180 Días)</option>
+                            <option value="Plan Anual">Plan Anual (365 Días)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Fecha de Inicio</label>
+                        <input type="date" id="member-start" required class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Estado de Membresía</label>
+                        <select id="member-status" class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                            <option value="Activo">Activo</option>
+                            <option value="Por Vencer">Por Vencer</option>
+                            <option value="Vencido">Vencido</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-bordercolor">
+                    <button type="button" onclick="closeMemberModal()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-colors">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-gold hover:bg-goldhover text-black font-semibold text-sm rounded-lg transition-colors">Guardar Socio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: PRODUCT ADD/EDIT -->
+    <div id="product-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardbg border border-bordercolor rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div class="px-6 py-4 border-b border-bordercolor flex items-center justify-between">
+                <h3 id="product-modal-title" class="font-bold text-white text-base">Registrar Nuevo Producto</h3>
+                <button onclick="closeProductModal()" class="text-zinc-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="product-form" onsubmit="saveProduct(event)" class="p-6 space-y-4">
+                <input type="hidden" id="product-id">
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Nombre del Producto</label>
+                    <input type="text" id="product-name" required class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Categoría</label>
+                        <select id="product-category" class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                            <option value="Proteínas y Ganadores">Proteínas y Ganadores</option>
+                            <option value="Creatinas y Pre-entrenos">Creatinas y Pre-entrenos</option>
+                            <option value="Bebidas e Hidratantes">Bebidas e Hidratantes</option>
+                            <option value="Snacks y Alimentos">Snacks y Alimentos</option>
+                            <option value="Accesorios / Merch">Accesorios / Merch</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Stock Actual</label>
+                        <input type="number" id="product-stock" min="0" step="1" required class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Precio Costo ($)</label>
+                        <input type="number" step="0.01" id="product-cost" min="0" required class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Precio Venta ($)</label>
+                        <input type="number" step="0.01" id="product-price" min="0" required class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Stock Mínimo</label>
+                        <input type="number" id="product-min" min="0" step="1" required class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                    </div>
+                </div>
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-bordercolor">
+                    <button type="button" onclick="closeProductModal()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-colors">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-gold hover:bg-goldhover text-black font-semibold text-sm rounded-lg transition-colors">Guardar Producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="reject-payment-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <form onsubmit="submitPaymentRejection(event)" class="bg-cardbg border border-bordercolor rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h3 class="font-bold text-white">Rechazar comprobante</h3>
+                    <p class="text-xs text-zinc-400 mt-1">El motivo se mostrará al socio en su historial de pagos.</p>
+                </div>
+                <button type="button" onclick="closePaymentRejection()" class="text-zinc-400 hover:text-white" aria-label="Cerrar"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <textarea id="rejection-note" required rows="3" maxlength="240" placeholder="Ej. El número de operación no coincide con el monto." class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-gold"></textarea>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closePaymentRejection()" class="px-4 py-2 bg-zinc-800 text-white text-sm rounded-lg">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-red-500 hover:bg-red-400 text-white font-semibold text-sm rounded-lg">Confirmar rechazo</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- MODAL: USER ADD/EDIT -->
+    <div id="user-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardbg border border-bordercolor rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div class="px-6 py-4 border-b border-bordercolor flex items-center justify-between">
+                <h3 id="user-modal-title" class="font-bold text-white text-base">Registrar Nuevo Usuario</h3>
+                <button onclick="closeUserModal()" class="text-zinc-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="user-form" onsubmit="saveUser(event)" class="p-6 space-y-4">
+                <input type="hidden" id="user-id">
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Nombre Completo</label>
+                    <input type="text" id="user-fullname" required class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Nombre de Usuario (Username)</label>
+                    <input type="text" id="user-username" required class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Rol en el Sistema</label>
+                    <select id="user-role-select" class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                        <option value="admin">Dueño / Administrador (Acceso Total)</option>
+                        <option value="staff">Recepcionista / Empleado (POS y Socios)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Estado</label>
+                    <select id="user-status" class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                        <option value="Activo">Activo</option>
+                        <option value="Inactivo">Inactivo</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-bordercolor">
+                    <button type="button" onclick="closeUserModal()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-colors">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-gold hover:bg-goldhover text-black font-semibold text-sm rounded-lg transition-colors">Guardar Usuario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ROLE SWITCHER / SIMULATE LOGIN -->
+    <div id="role-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardbg border border-bordercolor rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-white text-base">Cambiar Sesión / Rol (Simulador)</h3>
+                <button onclick="closeRoleModal()" class="text-zinc-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <p class="text-xs text-zinc-400">Selecciona con qué usuario deseas probar el sistema para comprobar los permisos (RBAC):</p>
+            <div class="space-y-2 pt-2" id="role-users-list">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RESET CONFIRMATION -->
+    <div id="reset-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardbg border border-bordercolor rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-4 text-center">
+            <div class="w-12 h-12 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto border border-red-500/20">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-white text-lg">¿Restaurar datos de fábrica?</h3>
+            <p class="text-sm text-zinc-400">Esta acción restablecerá socios, inventario, usuarios y transacciones a los valores originales de demostración.</p>
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <button onclick="closeResetModal()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-colors">Cancelar</button>
+                <button onclick="executeFactoryReset()" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors">Sí, Restaurar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        // --- INITIAL DATA STORE ---
+        const initialMembers = [
+            { id: 1, name: "Carlos Mendoza", phone: "+51 987 654 321", plan: "Plan Trimestral", start: "2026-02-15", end: "2026-05-15", status: "Activo" },
+            { id: 2, name: "Sofía Rivas", phone: "+51 912 345 678", plan: "Plan Mensual", start: "2026-04-01", end: "2026-05-01", status: "Por Vencer" },
+            { id: 3, name: "Diego Vargas", phone: "+51 955 443 322", plan: "Pase Diario", start: "2026-05-05", end: "2026-05-05", status: "Activo" },
+            { id: 4, name: "Valeria Gómez", phone: "+51 933 221 100", plan: "Plan Anual", start: "2025-10-10", end: "2026-10-10", status: "Activo" },
+            { id: 5, name: "Mateo Silva", phone: "+51 977 888 999", plan: "Plan Mensual", start: "2026-03-20", end: "2026-04-20", status: "Vencido" }
+        ];
+
+        const initialInventory = [
+            { id: 101, name: "Whey Protein Isolate 5lb", category: "Proteínas y Ganadores", cost: 75.00, price: 95.00, stock: 12, min: 3 },
+            { id: 102, name: "Mass Gainer Pro 10lb", category: "Proteínas y Ganadores", cost: 60.00, price: 85.00, stock: 5, min: 2 },
+            { id: 103, name: "Creatina Monohidratada 300g", category: "Creatinas y Pre-entrenos", cost: 22.00, price: 35.00, stock: 18, min: 5 },
+            { id: 104, name: "Pre-Workout Explosive 300g", category: "Creatinas y Pre-entrenos", cost: 25.00, price: 40.00, stock: 8, min: 4 },
+            { id: 105, name: "BCAA 2:1:1 400g", category: "Creatinas y Pre-entrenos", cost: 20.00, price: 32.00, stock: 10, min: 3 },
+            { id: 106, name: "Agua Mineral 600ml", category: "Bebidas e Hidratantes", cost: 0.50, price: 1.50, stock: 45, min: 15 },
+            { id: 107, name: "Bebida Isotónica Power 500ml", category: "Bebidas e Hidratantes", cost: 1.20, price: 3.00, stock: 24, min: 10 },
+            { id: 108, name: "Energético Monster 473ml", category: "Bebidas e Hidratantes", cost: 1.80, price: 4.00, stock: 14, min: 6 },
+            { id: 109, name: "Barra Proteica Choco-Nut", category: "Snacks y Alimentos", cost: 1.50, price: 3.50, stock: 30, min: 10 },
+            { id: 110, name: "Batido Proteico Listo 500ml", category: "Snacks y Alimentos", cost: 2.50, price: 5.00, stock: 16, min: 5 },
+            { id: 111, name: "Shaker Deportivo 3 Compartimentos", category: "Accesorios / Merch", cost: 4.00, price: 10.00, stock: 9, min: 3 },
+            { id: 112, name: "Straps de Aguante de Cuero", category: "Accesorios / Merch", cost: 7.00, price: 18.00, stock: 6, min: 2 }
+        ];
+
+        const initialTransactions = [
+            { id: "TRX-8941", time: "10:24 AM", concept: "Venta: Whey Protein Isolate 5lb", staff: "Lucía R. (Staff)", method: "Tarjeta", total: 95.00 },
+            { id: "TRX-8940", time: "09:45 AM", concept: "Inscripción: Plan Trimestral (Carlos M.)", staff: "Mariano (Dueño)", method: "Efectivo", total: 150.00 },
+            { id: "TRX-8939", time: "09:12 AM", concept: "Venta: Agua Mineral + Barra Proteica", staff: "Lucía R. (Staff)", method: "Yape / Plin", total: 5.00 }
+        ];
+
+        const initialUsers = [
+            { id: 1, fullname: "Mariano CEO", username: "mariano", role: "admin", status: "Activo" },
+            { id: 2, fullname: "Lucía R. Rivas", username: "lucia", role: "staff", status: "Activo" },
+            { id: 3, fullname: "Marcos Pérez", username: "marcos", role: "staff", status: "Activo" }
+        ];
+
+        // --- STATE MANAGEMENT ---
+        let state = {
+            currentView: 'dashboard',
+            currentUser: JSON.parse(localStorage.getItem('gym_current_user')) || { id: 1, fullname: "Mariano CEO", username: "mariano", role: "admin" },
+            members: JSON.parse(localStorage.getItem('gym_members')) || initialMembers,
+            inventory: JSON.parse(localStorage.getItem('gym_inventory')) || initialInventory,
+            transactions: JSON.parse(localStorage.getItem('gym_transactions')) || initialTransactions,
+            users: JSON.parse(localStorage.getItem('gym_users')) || initialUsers,
+            cart: [],
+            paymentMethod: 'Efectivo',
+            memberFilter: 'all',
+            inventoryCategory: 'all',
+            stockMovements: JSON.parse(localStorage.getItem('gym_stock_movements')) || [],
+            posCategory: 'all'
+        };
+        let rejectionTargetId = null;
+
+        function persistState() {
+            localStorage.setItem('gym_members', JSON.stringify(state.members));
+            localStorage.setItem('gym_inventory', JSON.stringify(state.inventory));
+            localStorage.setItem('gym_transactions', JSON.stringify(state.transactions));
+            localStorage.setItem('gym_users', JSON.stringify(state.users));
+            localStorage.setItem('gym_current_user', JSON.stringify(state.currentUser));
+            localStorage.setItem('gym_stock_movements', JSON.stringify(state.stockMovements));
+        }
+
+        function escapeHtml(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[character]);
+        }
+
+        // --- TOAST NOTIFICATIONS ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-zinc-900 border-gold/40 text-gold' : 'bg-zinc-900 border-red-500/40 text-red-400';
+            const iconName = type === 'success' ? 'check-circle' : 'alert-circle';
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${bgClass}`;
+            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i>`;
+            const label = document.createElement('span');
+            label.textContent = message;
+            toast.appendChild(label);
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- RBAC & SIDEBAR NAVIGATION ---
+        function renderSidebar() {
+            const nav = document.getElementById('sidebar-nav');
+            nav.innerHTML = '';
+
+            const isAdmin = state.currentUser.role === 'admin';
+            let pendingSubs = JSON.parse(localStorage.getItem('gym_pending_subscriptions')) || [];
+            const pendingCount = pendingSubs.length;
+
+            let items = [];
+            if (isAdmin) {
+                items = [
+                    { id: 'dashboard', label: 'Panel Gerencial', icon: 'layout-dashboard' },
+                    { id: 'members', label: 'Gestión de Socios', icon: 'users' },
+                    { id: 'subscriptions', label: `Validar Pagos ${pendingCount > 0 ? '('+pendingCount+')' : ''}`, icon: 'check-circle' },
+                    { id: 'classes', label: 'Clases y Reservas', icon: 'calendar-days' },
+                    { id: 'inventory', label: 'Inventario & Almacén', icon: 'package' },
+                    { id: 'pos', label: 'POS Mostrador', icon: 'shopping-cart' },
+                    { id: 'checkin', label: 'Control Asistencia', icon: 'scan-line' },
+                    { id: 'users', label: 'Usuarios & Permisos', icon: 'shield-check' }
+                ];
+            } else {
+                items = [
+                    { id: 'pos', label: 'POS Mostrador', icon: 'shopping-cart' },
+                    { id: 'members', label: 'Gestión de Socios', icon: 'users' },
+                    { id: 'checkin', label: 'Control Asistencia', icon: 'scan-line' }
+                ];
+            }
+
+            items.forEach(item => {
+                const btn = document.createElement('button');
+                btn.id = `nav-${item.id}`;
+                btn.onclick = () => switchView(item.id);
+                btn.className = `w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${state.currentView === item.id ? 'bg-gold text-black font-semibold shadow-md shadow-gold/10' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'}`;
+
+                let badgeHtml = '';
+                if (item.id === 'subscriptions' && pendingCount > 0) {
+                    badgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-black">${pendingCount}</span>`;
+                }
+
+                btn.innerHTML = `<span class="flex items-center gap-3"><i data-lucide="${item.icon}" class="w-4 h-4"></i> ${item.label.replace(/\(\d+\)/, '')}</span> ${badgeHtml}`;
+                nav.appendChild(btn);
+            });
+
+            document.getElementById('current-user-name').textContent = state.currentUser.fullname;
+            document.getElementById('current-user-role').textContent = isAdmin ? 'Dueño / Administrador' : 'Recepcionista (Staff)';
+            document.getElementById('current-user-avatar').textContent = state.currentUser.fullname.substring(0, 2).toUpperCase();
+
+            lucide.createIcons();
+        }
+
+        function switchView(viewId) {
+            const isAdmin = state.currentUser.role === 'admin';
+            if (!isAdmin && ['dashboard', 'inventory', 'users', 'subscriptions', 'classes'].includes(viewId)) {
+                showToast("Acceso restringido para el rol de recepcionista", "error");
+                return;
+            }
+
+            state.currentView = viewId;
+            renderSidebar();
+
+            const views = ['dashboard', 'members', 'subscriptions', 'classes', 'inventory', 'pos', 'checkin', 'users'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) {
+                    if (v === viewId) el.classList.remove('hidden');
+                    else el.classList.add('hidden');
+                }
+            });
+
+            if (viewId === 'dashboard') renderDashboard();
+            if (viewId === 'members') renderMembers();
+            if (viewId === 'subscriptions') renderSubscriptions();
+            if (viewId === 'classes') renderClassBookings();
+            if (viewId === 'inventory') renderInventory();
+            if (viewId === 'pos') {
+                renderPosProducts();
+                renderCart();
+            }
+            if (viewId === 'users') renderUsers();
+        }
+
+        // --- ROLE SWITCHER MODAL ---
+        function openRoleModal() {
+            const list = document.getElementById('role-users-list');
+            list.innerHTML = '';
+            state.users.forEach(u => {
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${state.currentUser.id === u.id ? 'border-gold bg-gold/5 text-white' : 'border-bordercolor bg-zinc-900 text-zinc-300 hover:border-zinc-700'}`;
+                div.onclick = () => {
+                    state.currentUser = u;
+                    persistState();
+                    closeRoleModal();
+                    if (u.role === 'staff' && ['dashboard', 'inventory', 'users', 'subscriptions', 'classes'].includes(state.currentView)) {
+                        switchView('pos');
+                    } else {
+                        switchView(state.currentView);
+                    }
+                    showToast(`Sesión cambiada a: ${u.fullname}`);
+                };
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-zinc-800 border border-bordercolor flex items-center justify-center font-bold text-xs text-gold">
+                            ${escapeHtml(u.fullname.substring(0,2).toUpperCase())}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-sm text-white">${escapeHtml(u.fullname)}</p>
+                            <p class="text-[11px] text-zinc-400">@${escapeHtml(u.username)} • <span class="${u.role === 'admin' ? 'text-gold font-medium' : 'text-zinc-400'}">${u.role === 'admin' ? 'Dueño / Admin' : 'Recepcionista'}</span></p>
+                        </div>
+                    </div>
+                    <span class="text-xs px-2.5 py-1 rounded-md ${state.currentUser.id === u.id ? 'bg-gold text-black font-semibold' : 'bg-zinc-800 text-zinc-400'}">${state.currentUser.id === u.id ? 'Activo' : 'Seleccionar'}</span>
+                `;
+                list.appendChild(div);
+            });
+            document.getElementById('role-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeRoleModal() {
+            document.getElementById('role-modal').classList.add('hidden');
+        }
+
+        // --- DASHBOARD RENDER ---
+        function renderDashboard() {
+            const activeMembers = state.members.filter(m => m.status === 'Activo').length;
+            const expiringMembers = state.members.filter(m => m.status === 'Por Vencer').length;
+            const lowStockProducts = state.inventory.filter(p => p.stock <= p.min).length;
+            const totalRevenue = state.transactions.reduce((acc, t) => acc + t.total, 0);
+
+            document.getElementById('kpi-ingresos').textContent = `$${totalRevenue.toFixed(2)}`;
+            document.getElementById('kpi-socios-activos').textContent = activeMembers;
+            document.getElementById('kpi-socios-total').textContent = `Total: ${state.members.length}`;
+            document.getElementById('kpi-por-vencer').textContent = expiringMembers;
+            document.getElementById('kpi-stock-bajo').textContent = lowStockProducts;
+
+            const tbody = document.getElementById('dashboard-transactions-body');
+            tbody.innerHTML = '';
+            state.transactions.slice(0, 5).forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-zinc-900/40 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-3 font-mono text-xs text-zinc-400">${escapeHtml(t.id)}<br><span class="text-[10px] text-zinc-500">${escapeHtml(t.time)}</span></td>
+                    <td class="px-6 py-3 font-medium text-white">${escapeHtml(t.concept)}</td>
+                    <td class="px-6 py-3 text-xs text-zinc-400">${escapeHtml(t.staff)}</td>
+                    <td class="px-6 py-3"><span class="px-2 py-0.5 rounded-md text-xs bg-zinc-800 text-zinc-300 border border-bordercolor">${escapeHtml(t.method)}</span></td>
+                    <td class="px-6 py-3 text-right font-semibold text-gold">+$${t.total.toFixed(2)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function downloadCsv(filename, headers, rows) {
+            const escapeCell = value => {
+                let text = String(value == null ? '' : value);
+                if (typeof value === 'string' && /^\s*[=+\-@]/.test(text)) text = `'${text}`;
+                return `"${text.replace(/"/g, '""')}"`;
+            };
+            const csv = [headers, ...rows].map(row => row.map(escapeCell).join(',')).join('\r\n');
+            const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function exportTransactionsCsv() {
+            downloadCsv('reporte-ventas.csv',
+                ['ID', 'Fecha', 'Hora', 'Concepto', 'Responsable', 'Método de pago', 'Total'],
+                state.transactions.map(t => [t.id, t.date || '', t.time, t.concept, t.staff, t.method, t.total]));
+        }
+
+        function exportMembersCsv() {
+            downloadCsv('socios.csv',
+                ['Nombre', 'DNI', 'Teléfono', 'Plan', 'Inicio', 'Vencimiento', 'Estado'],
+                state.members.map(m => [m.name, m.dni || '', m.phone, m.plan, m.start, m.end, m.status]));
+        }
+
+        function exportInventoryCsv() {
+            downloadCsv('inventario.csv',
+                ['Producto', 'Categoría', 'Costo', 'Precio', 'Stock', 'Stock mínimo'],
+                state.inventory.map(p => [p.name, p.category, p.cost, p.price, p.stock, p.min]));
+        }
+
+        function exportStockMovementsCsv() {
+            downloadCsv('movimientos-stock.csv',
+                ['Fecha', 'Producto', 'Movimiento', 'Cantidad', 'Responsable'],
+                state.stockMovements.map(m => [m.date, m.product, m.type, m.quantity, m.user]));
+        }
+
+        function exportPaymentHistoryCsv() {
+            const history = JSON.parse(localStorage.getItem('gym_payment_history')) || [];
+            downloadCsv('historial-pagos.csv',
+                ['Nombre', 'DNI', 'Plan', 'Fecha', 'Estado', 'Observación'],
+                history.map(item => [item.name, item.dni, item.plan, item.reviewedAt || item.date, item.status, item.note || '']));
+        }
+
+        function renderClassBookings() {
+            const tbody = document.getElementById('class-bookings-body');
+            const bookings = JSON.parse(localStorage.getItem('gym_class_bookings')) || [];
+            tbody.innerHTML = '';
+            if (bookings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-5 py-8 text-center text-zinc-500">Aún no hay reservas para las clases.</td></tr>';
+                return;
+            }
+            bookings.slice().sort((a, b) => a.date.localeCompare(b.date)).forEach(booking => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="px-5 py-3 text-white">${escapeHtml(booking.name)}<span class="block text-zinc-500 font-mono text-xs">${escapeHtml(booking.dni)}</span></td><td class="px-5 py-3">${escapeHtml(booking.className)}</td><td class="px-5 py-3 text-zinc-400">${escapeHtml(booking.date)} · ${escapeHtml(booking.time)}</td><td class="px-5 py-3"><span class="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400">${escapeHtml(booking.status || 'Reservada')}</span></td><td class="px-5 py-3 text-right"><button onclick="cancelClassBooking('${escapeHtml(booking.id)}')" class="text-red-400 hover:text-red-300">Cancelar</button></td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function cancelClassBooking(id) {
+            if (!confirm('¿Cancelar esta reserva?')) return;
+            const bookings = JSON.parse(localStorage.getItem('gym_class_bookings')) || [];
+            localStorage.setItem('gym_class_bookings', JSON.stringify(bookings.filter(item => String(item.id) !== String(id))));
+            renderClassBookings();
+            showToast('Reserva cancelada');
+        }
+
+        // --- MEMBERS CRUD ---
+        function setMemberFilter(filter) {
+            state.memberFilter = filter;
+            ['all', 'active', 'expiring', 'expired'].forEach(f => {
+                const btn = document.getElementById(`filter-member-${f}`);
+                if (f === filter) {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-white border border-bordercolor transition-colors";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor transition-colors";
+                }
+            });
+            renderMembers();
+        }
+
+        function renderMembers() {
+            const search = document.getElementById('member-search').value.toLowerCase();
+            const tbody = document.getElementById('members-table-body');
+            tbody.innerHTML = '';
+
+            let filtered = state.members.filter(m => {
+                const matchesSearch = m.name.toLowerCase().includes(search) || m.phone.toLowerCase().includes(search) || String(m.dni || '').toLowerCase().includes(search);
+                if (!matchesSearch) return false;
+                if (state.memberFilter === 'active') return m.status === 'Activo';
+                if (state.memberFilter === 'expiring') return m.status === 'Por Vencer';
+                if (state.memberFilter === 'expired') return m.status === 'Vencido';
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-zinc-500 text-sm">No se encontraron socios registrados.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(m => {
+                let badgeClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+                if (m.status === 'Por Vencer') badgeClass = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                if (m.status === 'Vencido') badgeClass = "bg-red-500/10 text-red-400 border-red-500/20";
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-zinc-900/40 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-3.5 font-medium text-white flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 border border-bordercolor flex items-center justify-center text-gold text-xs font-bold">
+                            ${escapeHtml(m.name.charAt(0))}
+                        </div>
+                        ${escapeHtml(m.name)}
+                    </td>
+                    <td class="px-6 py-3.5 text-zinc-400 text-xs font-mono">${escapeHtml(m.dni || '—')}</td>
+                    <td class="px-6 py-3.5 text-zinc-400 text-xs font-mono">${escapeHtml(m.phone)}</td>
+                    <td class="px-6 py-3.5 text-zinc-300">${escapeHtml(m.plan)}</td>
+                    <td class="px-6 py-3.5 text-zinc-400 text-xs">${escapeHtml(m.start)}</td>
+                    <td class="px-6 py-3.5 text-zinc-400 text-xs">${escapeHtml(m.end)}</td>
+                    <td class="px-6 py-3.5"><span class="px-2.5 py-1 rounded-md text-xs font-medium border ${badgeClass}">${escapeHtml(m.status)}</span></td>
+                    <td class="px-6 py-3.5 text-right space-x-2">
+                        <button onclick="editMember(${m.id})" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors" title="Editar"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="deleteMember(${m.id})" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 transition-colors" title="Eliminar"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        // --- PENDING SUBSCRIPTIONS APPROVALS ---
+        function renderSubscriptions() {
+            const tbody = document.getElementById('subscriptions-table-body');
+            tbody.innerHTML = '';
+            let pending = JSON.parse(localStorage.getItem('gym_pending_subscriptions')) || [];
+            renderPaymentHistory();
+
+            if (pending.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-zinc-500 text-sm">No hay pagos o solicitudes pendientes por aprobar.</td></tr>`;
+                return;
+            }
+
+            pending.forEach(sub => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-zinc-900/40 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-3.5 font-medium text-white">
+                        ${escapeHtml(sub.name)}
+                        <span class="block text-[11px] text-zinc-400 font-mono">DNI: ${escapeHtml(sub.dni)} • Tel: ${escapeHtml(sub.phone)}</span>
+                    </td>
+                    <td class="px-6 py-3.5 text-zinc-300">${escapeHtml(sub.plan)}</td>
+                    <td class="px-6 py-3.5 font-mono text-xs text-gold">
+                        ${escapeHtml(sub.voucher)}
+                        ${sub.voucherFile ? `<button onclick="viewVoucher(${Number(sub.id)})" class="block mt-1 text-[11px] text-sky-400 hover:underline">${escapeHtml(sub.voucherFileName || 'Ver comprobante')}</button>` : ''}
+                    </td>
+                    <td class="px-6 py-3.5 text-zinc-400 text-xs">${escapeHtml(sub.date)}</td>
+                    <td class="px-6 py-3.5 font-semibold text-emerald-400">$${sub.price.toFixed(2)}</td>
+                    <td class="px-6 py-3.5 text-right space-x-2">
+                        <button onclick="approveSubscription(${sub.id})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-lg transition-colors inline-flex items-center gap-1">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i> Aprobar & Activar
+                        </button>
+                        <button onclick="rejectSubscription(${sub.id})" class="px-3 py-1.5 bg-zinc-800 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 font-medium text-xs rounded-lg transition-colors inline-flex items-center gap-1">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i> Rechazar
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function updatePaymentHistory(subscription, status, note) {
+            const history = JSON.parse(localStorage.getItem('gym_payment_history')) || [];
+            const existing = history.find(item => item.id === subscription.id);
+            const historySubscription = { ...subscription };
+            delete historySubscription.voucherFile;
+            const record = {
+                ...historySubscription,
+                status,
+                note,
+                reviewedAt: new Date().toLocaleString('es-PE')
+            };
+            if (existing) Object.assign(existing, record);
+            else history.unshift(record);
+            localStorage.setItem('gym_payment_history', JSON.stringify(history));
+            localStorage.setItem(`gym_client_dni_${subscription.dni}`, JSON.stringify({
+                name: subscription.name,
+                plan: subscription.plan,
+                status,
+                voucher: subscription.voucher,
+                date: subscription.date,
+                note
+            }));
+        }
+
+        function viewVoucher(id) {
+            const pending = JSON.parse(localStorage.getItem('gym_pending_subscriptions')) || [];
+            const subscription = pending.find(item => item.id === id);
+            const match = (subscription && subscription.voucherFile || '').match(/^data:(image\/(?:png|jpeg|webp)|application\/pdf);base64,([A-Za-z0-9+/]+={0,2})$/);
+            if (!match) {
+                showToast("No se encontró un comprobante válido para esta solicitud.", "error");
+                return;
+            }
+            const binary = atob(match[2]);
+            const bytes = new Uint8Array(binary.length);
+            for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+            const previewUrl = URL.createObjectURL(new Blob([bytes], { type: match[1] }));
+            const link = document.createElement('a');
+            link.href = previewUrl;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(previewUrl), 60000);
+        }
+
+        function renderPaymentHistory() {
+            const tbody = document.getElementById('payment-history-body');
+            const history = JSON.parse(localStorage.getItem('gym_payment_history')) || [];
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-5 py-6 text-center text-zinc-500">Aún no hay pagos validados o rechazados.</td></tr>';
+                return;
+            }
+            history.slice(0, 30).forEach(item => {
+                const statusClass = item.status === 'Aprobado' ? 'text-emerald-400' : item.status === 'Pendiente' ? 'text-amber-400' : 'text-red-400';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="px-5 py-3">${escapeHtml(item.name)}<span class="block text-zinc-500 font-mono">${escapeHtml(item.dni)}</span></td><td class="px-5 py-3">${escapeHtml(item.plan)}</td><td class="px-5 py-3 text-zinc-400">${escapeHtml(item.reviewedAt || item.date)}</td><td class="px-5 py-3 font-semibold ${statusClass}">${escapeHtml(item.status)}</td><td class="px-5 py-3 text-zinc-400">${escapeHtml(item.note || '—')}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function approveSubscription(id) {
+            let pending = JSON.parse(localStorage.getItem('gym_pending_subscriptions')) || [];
+            const sub = pending.find(p => p.id === id);
+            if (!sub) return;
+
+            // Calculate dates
+            const start = new Date().toISOString().split('T')[0];
+            let endDate = new Date();
+            if (sub.plan.includes('Diario')) endDate.setDate(endDate.getDate() + 1);
+            else if (sub.plan.includes('Mensual')) endDate.setDate(endDate.getDate() + 30);
+            else if (sub.plan.includes('Trimestral')) endDate.setDate(endDate.getDate() + 90);
+            else if (sub.plan.includes('Semestral')) endDate.setDate(endDate.getDate() + 180);
+            else if (sub.plan.includes('Anual')) endDate.setDate(endDate.getDate() + 365);
+            const end = endDate.toISOString().split('T')[0];
+
+            // Add to members
+            const existingMember = state.members.find(member => member.dni && member.dni === sub.dni);
+            const newMember = {
+                id: existingMember ? existingMember.id : Date.now(),
+                name: sub.name,
+                dni: sub.dni,
+                phone: sub.phone,
+                plan: sub.plan,
+                start,
+                end,
+                status: 'Activo'
+            };
+            if (existingMember) {
+                Object.assign(existingMember, newMember);
+            } else {
+                state.members.unshift(newMember);
+            }
+            updatePaymentHistory(sub, 'Aprobado', 'Pago validado y membresía activada.');
+
+            // Add transaction
+            state.transactions.unshift({
+                id: `TRX-${Math.floor(1000 + Math.random() * 9000)}`,
+                date: new Date().toLocaleDateString('es-PE'),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                concept: `Suscripción Web: ${sub.plan} (${sub.name})`,
+                staff: `${state.currentUser.fullname} (Aprobación Web)`,
+                method: "Transferencia / Depósito",
+                total: sub.price
+            });
+
+            // Remove from pending
+            pending = pending.filter(p => p.id !== id);
+            localStorage.setItem('gym_pending_subscriptions', JSON.stringify(pending));
+
+            persistState();
+            renderSubscriptions();
+            renderSidebar();
+            showToast(`¡Membresía aprobada y activada para ${sub.name}!`);
+        }
+
+        function rejectSubscription(id) {
+            const pending = JSON.parse(localStorage.getItem('gym_pending_subscriptions')) || [];
+            if (!pending.some(item => item.id === id)) return;
+            rejectionTargetId = id;
+            document.getElementById('rejection-note').value = '';
+            document.getElementById('reject-payment-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closePaymentRejection() {
+            rejectionTargetId = null;
+            document.getElementById('reject-payment-modal').classList.add('hidden');
+        }
+
+        function submitPaymentRejection(event) {
+            event.preventDefault();
+            const pending = JSON.parse(localStorage.getItem('gym_pending_subscriptions')) || [];
+            const sub = pending.find(item => String(item.id) === String(rejectionTargetId));
+            const observation = document.getElementById('rejection-note').value.trim();
+            if (!sub || !observation) {
+                showToast("No se encontró la solicitud o falta el motivo del rechazo.", "error");
+                return;
+            }
+            updatePaymentHistory(sub, 'Rechazado', observation.trim() || 'Comprobante no validado.');
+            localStorage.setItem('gym_pending_subscriptions', JSON.stringify(pending.filter(item => item.id !== sub.id)));
+            closePaymentRejection();
+            renderSubscriptions();
+            renderSidebar();
+            showToast("Solicitud rechazada y observación guardada", "error");
+        }
+
+        function openMemberModal(id = null) {
+            document.getElementById('member-modal').classList.remove('hidden');
+            if (id) {
+                document.getElementById('member-modal-title').textContent = "Editar Socio";
+                const m = state.members.find(x => x.id === id);
+                document.getElementById('member-id').value = m.id;
+                document.getElementById('member-name').value = m.name;
+                document.getElementById('member-dni').value = m.dni || '';
+                document.getElementById('member-phone').value = m.phone;
+                document.getElementById('member-plan').value = m.plan;
+                document.getElementById('member-start').value = m.start;
+                document.getElementById('member-status').value = m.status;
+            } else {
+                document.getElementById('member-modal-title').textContent = "Registrar Nuevo Socio";
+                document.getElementById('member-form').reset();
+                document.getElementById('member-id').value = '';
+                document.getElementById('member-start').value = new Date().toISOString().split('T')[0];
+            }
+        }
+
+        function closeMemberModal() {
+            document.getElementById('member-modal').classList.add('hidden');
+        }
+
+        function saveMember(e) {
+            e.preventDefault();
+            const id = document.getElementById('member-id').value;
+            const name = document.getElementById('member-name').value;
+            const dni = document.getElementById('member-dni').value.trim();
+            const phone = document.getElementById('member-phone').value;
+            const plan = document.getElementById('member-plan').value;
+            const start = document.getElementById('member-start').value;
+            const status = document.getElementById('member-status').value;
+
+            if (dni && !/^\d{8,12}$/.test(dni)) {
+                showToast("El DNI debe contener entre 8 y 12 dígitos.", "error");
+                return;
+            }
+            if (dni && state.members.some(member => String(member.dni || '') === dni && String(member.id) !== id)) {
+                showToast("Ya existe un socio registrado con ese DNI", "error");
+                return;
+            }
+
+            let endDate = new Date(start);
+            if (plan.includes('Diario')) endDate.setDate(endDate.getDate() + 1);
+            else if (plan.includes('Mensual')) endDate.setDate(endDate.getDate() + 30);
+            else if (plan.includes('Trimestral')) endDate.setDate(endDate.getDate() + 90);
+            else if (plan.includes('Semestral')) endDate.setDate(endDate.getDate() + 180);
+            else if (plan.includes('Anual')) endDate.setDate(endDate.getDate() + 365);
+            const end = endDate.toISOString().split('T')[0];
+
+            if (id) {
+                const idx = state.members.findIndex(x => x.id == id);
+                state.members[idx] = { ...state.members[idx], id: Number(id), name, dni, phone, plan, start, end, status };
+                showToast("Socio actualizado exitosamente");
+            } else {
+                const newId = Date.now();
+                state.members.unshift({ id: newId, name, dni, phone, plan, start, end, status });
+                state.transactions.unshift({
+                    id: `TRX-${Math.floor(1000 + Math.random() * 9000)}`,
+                    date: new Date().toLocaleDateString('es-PE'),
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    concept: `Inscripción: ${plan} (${name})`,
+                    staff: state.currentUser.fullname,
+                    method: "Efectivo",
+                    total: plan.includes('Diario') ? 10 : plan.includes('Mensual') ? 60 : plan.includes('Trimestral') ? 150 : 280
+                });
+                showToast("Socio registrado e ingreso contabilizado");
+            }
+            persistState();
+            closeMemberModal();
+            renderMembers();
+        }
+
+        function editMember(id) {
+            openMemberModal(id);
+        }
+
+        function deleteMember(id) {
+            if (confirm("¿Estás seguro de eliminar este socio?")) {
+                state.members = state.members.filter(x => x.id !== id);
+                persistState();
+                renderMembers();
+                showToast("Socio eliminado", "error");
+            }
+        }
+
+        // --- INVENTORY CRUD ---
+        function setInventoryCategory(cat) {
+            state.inventoryCategory = cat;
+            const cats = ['all', 'Proteínas y Ganadores', 'Creatinas y Pre-entrenos', 'Bebidas e Hidratantes', 'Snacks y Alimentos', 'Accesorios / Merch'];
+            cats.forEach(c => {
+                const idBtn = c === 'all' ? 'cat-all' :
+                              c.includes('Proteínas') ? 'cat-prot' :
+                              c.includes('Creatinas') ? 'cat-creat' :
+                              c.includes('Bebidas') ? 'cat-beb' :
+                              c.includes('Snacks') ? 'cat-snack' : 'cat-acc';
+                const btn = document.getElementById(idBtn);
+                if (btn) {
+                    if (c === cat) {
+                        btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-white border border-bordercolor transition-colors whitespace-nowrap";
+                    } else {
+                        btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor transition-colors whitespace-nowrap";
+                    }
+                }
+            });
+            renderInventory();
+        }
+
+        function renderInventory() {
+            const search = document.getElementById('inventory-search').value.toLowerCase();
+            const lowStockOnly = document.getElementById('inventory-low-stock').checked;
+            const tbody = document.getElementById('inventory-table-body');
+            tbody.innerHTML = '';
+            renderStockMovements();
+
+            let filtered = state.inventory.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(search) || p.category.toLowerCase().includes(search);
+                if (!matchesSearch) return false;
+                if (state.inventoryCategory !== 'all' && p.category !== state.inventoryCategory) return false;
+                if (lowStockOnly && p.stock > p.min) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-zinc-500 text-sm">No se encontraron productos en el inventario.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(p => {
+                const isLowStock = p.stock <= p.min;
+                const stockBadge = isLowStock ?
+                    `<span class="px-2 py-0.5 rounded text-xs bg-red-500/10 text-red-400 border border-red-500/20 font-semibold">${p.stock} (Bajo)</span>` :
+                    `<span class="text-zinc-200 font-medium">${p.stock}</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-zinc-900/40 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-3.5 font-medium text-white">${escapeHtml(p.name)}</td>
+                    <td class="px-6 py-3.5 text-zinc-400 text-xs">${escapeHtml(p.category)}</td>
+                    <td class="px-6 py-3.5 text-zinc-400">$${p.cost.toFixed(2)}</td>
+                    <td class="px-6 py-3.5 text-gold font-semibold">$${p.price.toFixed(2)}</td>
+                    <td class="px-6 py-3.5">${stockBadge}</td>
+                    <td class="px-6 py-3.5 text-zinc-400">${p.min}</td>
+                    <td class="px-6 py-3.5 text-right space-x-2">
+                        <button onclick="editProduct(${p.id})" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors" title="Editar"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="deleteProduct(${p.id})" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 transition-colors" title="Eliminar"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function recordStockMovement(product, quantity, type) {
+            if (!quantity) return;
+            state.stockMovements.unshift({
+                id: Date.now() + Math.random(),
+                date: new Date().toLocaleString('es-PE'),
+                product: product.name,
+                type,
+                quantity,
+                user: state.currentUser.fullname
+            });
+            state.stockMovements = state.stockMovements.slice(0, 200);
+        }
+
+        function renderStockMovements() {
+            const tbody = document.getElementById('stock-movements-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (state.stockMovements.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-5 py-6 text-center text-zinc-500">Los movimientos de inventario aparecerán aquí.</td></tr>';
+                return;
+            }
+            state.stockMovements.slice(0, 10).forEach(movement => {
+                const positive = movement.quantity > 0;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="px-5 py-3 text-zinc-400">${movement.date}</td><td class="px-5 py-3 text-white">${movement.product}</td><td class="px-5 py-3">${movement.type}</td><td class="px-5 py-3 font-semibold ${positive ? 'text-emerald-400' : 'text-red-400'}">${positive ? '+' : ''}${movement.quantity}</td><td class="px-5 py-3 text-zinc-400">${movement.user}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openProductModal(id = null) {
+            document.getElementById('product-modal').classList.remove('hidden');
+            if (id) {
+                document.getElementById('product-modal-title').textContent = "Editar Producto";
+                const p = state.inventory.find(x => x.id === id);
+                document.getElementById('product-id').value = p.id;
+                document.getElementById('product-name').value = p.name;
+                document.getElementById('product-category').value = p.category;
+                document.getElementById('product-stock').value = p.stock;
+                document.getElementById('product-cost').value = p.cost;
+                document.getElementById('product-price').value = p.price;
+                document.getElementById('product-min').value = p.min;
+            } else {
+                document.getElementById('product-modal-title').textContent = "Registrar Nuevo Producto";
+                document.getElementById('product-form').reset();
+                document.getElementById('product-id').value = '';
+            }
+        }
+
+        function closeProductModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            const id = document.getElementById('product-id').value;
+            const name = document.getElementById('product-name').value;
+            const category = document.getElementById('product-category').value;
+            const stock = Number(document.getElementById('product-stock').value);
+            const cost = Number(document.getElementById('product-cost').value);
+            const price = Number(document.getElementById('product-price').value);
+            const min = Number(document.getElementById('product-min').value);
+
+            if (id) {
+                const idx = state.inventory.findIndex(x => x.id == id);
+                const previous = state.inventory[idx];
+                if (!previous) {
+                    showToast("No se encontró el producto que intentas actualizar", "error");
+                    return;
+                }
+                state.inventory[idx] = { ...previous, id: Number(id), name, category, stock, cost, price, min };
+                recordStockMovement(state.inventory[idx], stock - previous.stock, 'Ajuste manual');
+                showToast("Producto actualizado exitosamente");
+            } else {
+                const newId = Date.now();
+                const product = { id: newId, name, category, stock, cost, price, min };
+                state.inventory.unshift(product);
+                recordStockMovement(product, stock, 'Ingreso inicial');
+                showToast("Producto registrado exitosamente");
+            }
+            persistState();
+            closeProductModal();
+            renderInventory();
+        }
+
+        function editProduct(id) {
+            openProductModal(id);
+        }
+
+        function deleteProduct(id) {
+            if (confirm("¿Estás seguro de eliminar este producto?")) {
+                const product = state.inventory.find(x => x.id === id);
+                if (product && product.stock > 0 && !confirm(`El producto tiene ${product.stock} unidades. ¿Deseas eliminarlo de todos modos?`)) return;
+                state.inventory = state.inventory.filter(x => x.id !== id);
+                state.cart = state.cart.filter(item => item.id !== id);
+                persistState();
+                renderCart();
+                renderInventory();
+                showToast("Producto eliminado", "error");
+            }
+        }
+
+        // --- USERS MANAGEMENT CRUD (ADMIN ONLY) ---
+        function renderUsers() {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+
+            state.users.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-zinc-900/40 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-3.5 font-medium text-white flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 border border-bordercolor flex items-center justify-center text-gold text-xs font-bold">
+                            ${escapeHtml(u.fullname.substring(0,2).toUpperCase())}
+                        </div>
+                        ${escapeHtml(u.fullname)}
+                    </td>
+                    <td class="px-6 py-3.5 text-zinc-400 font-mono text-xs">@${escapeHtml(u.username)}</td>
+                    <td class="px-6 py-3.5"><span class="px-2.5 py-1 rounded-md text-xs font-medium ${u.role === 'admin' ? 'bg-gold/10 text-gold border border-gold/20' : 'bg-zinc-800 text-zinc-300 border border-bordercolor'}">${u.role === 'admin' ? 'Dueño / Administrador' : 'Recepcionista (Staff)'}</span></td>
+                    <td class="px-6 py-3.5"><span class="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">${escapeHtml(u.status)}</span></td>
+                    <td class="px-6 py-3.5 text-right space-x-2">
+                        <button onclick="editUser(${u.id})" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors" title="Editar"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                        ${u.id !== 1 ? `<button onclick="deleteUser(${u.id})" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 transition-colors" title="Eliminar"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function openUserModal(id = null) {
+            document.getElementById('user-modal').classList.remove('hidden');
+            if (id) {
+                document.getElementById('user-modal-title').textContent = "Editar Usuario";
+                const u = state.users.find(x => x.id === id);
+                document.getElementById('user-id').value = u.id;
+                document.getElementById('user-fullname').value = u.fullname;
+                document.getElementById('user-username').value = u.username;
+                document.getElementById('user-role-select').value = u.role;
+                document.getElementById('user-status').value = u.status;
+            } else {
+                document.getElementById('user-modal-title').textContent = "Registrar Nuevo Usuario";
+                document.getElementById('user-form').reset();
+                document.getElementById('user-id').value = '';
+            }
+        }
+
+        function closeUserModal() {
+            document.getElementById('user-modal').classList.add('hidden');
+        }
+
+        function saveUser(e) {
+            e.preventDefault();
+            const id = document.getElementById('user-id').value;
+            const fullname = document.getElementById('user-fullname').value;
+            const username = document.getElementById('user-username').value;
+            const role = document.getElementById('user-role-select').value;
+            const status = document.getElementById('user-status').value;
+
+            if (id) {
+                const idx = state.users.findIndex(x => x.id == id);
+                state.users[idx] = { id: Number(id), fullname, username, role, status };
+                showToast("Usuario actualizado exitosamente");
+            } else {
+                const newId = Date.now();
+                state.users.push({ id: newId, fullname, username, role, status });
+                showToast("Usuario creado exitosamente");
+            }
+            persistState();
+            closeUserModal();
+            renderUsers();
+        }
+
+        function editUser(id) {
+            openUserModal(id);
+        }
+
+        function deleteUser(id) {
+            if (confirm("¿Estás seguro de eliminar este usuario?")) {
+                state.users = state.users.filter(x => x.id !== id);
+                persistState();
+                renderUsers();
+                showToast("Usuario eliminado", "error");
+            }
+        }
+
+        // --- CHECK-IN ASISTENCIA ---
+        function handleCheckinSearch(query) {
+            const container = document.getElementById('checkin-results');
+            if (!query.trim()) {
+                container.innerHTML = `<div class="text-center py-12 text-zinc-500 text-sm">Comienza a escribir para buscar socios y registrar su asistencia.</div>`;
+                return;
+            }
+
+            const q = query.toLowerCase();
+            const qrMatch = query.trim().match(/^IRONFIT-MEMBER:(\d+)$/i);
+            const found = state.members.filter(m => qrMatch
+            ? String(m.id) === qrMatch[1]
+            : m.name.toLowerCase().includes(q) || m.phone.toLowerCase().includes(q) || String(m.dni || '').toLowerCase().includes(q));
+
+            if (found.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-zinc-500 text-sm">No se encontró ningún socio con ese nombre o teléfono.</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            found.forEach(m => {
+                let statusBadge = m.status === 'Activo' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : m.status === 'Por Vencer' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20';
+                const card = document.createElement('div');
+                card.className = "bg-zinc-900 border border-bordercolor rounded-xl p-4 flex items-center justify-between";
+                card.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-gold/10 border border-gold/30 text-gold flex items-center justify-center font-bold text-lg">
+                            ${escapeHtml(m.name.charAt(0))}
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white text-base">${escapeHtml(m.name)}</h4>
+                            <p class="text-xs text-zinc-400">Plan: ${escapeHtml(m.plan)} • Vence: ${escapeHtml(m.end)}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-md text-xs font-semibold border ${statusBadge}">${escapeHtml(m.status)}</span>
+                        <button onclick="registerCheckinById(${Number(m.id)})" class="px-4 py-2 bg-gold hover:bg-goldhover text-black font-semibold text-xs rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+                            <i data-lucide="check" class="w-4 h-4"></i> Registrar Acceso
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function registerCheckin(name, status) {
+            if (status === 'Vencido') {
+                showToast(`Acceso denegado: La membresía de ${name} está VENCIDA.`, 'error');
+            } else {
+                showToast(`¡Acceso concedido! Bienvenido/a, ${name}`);
+            }
+        }
+
+        function registerCheckinById(id) {
+            const member = state.members.find(item => item.id === id);
+            if (member) registerCheckin(member.name, member.status);
+        }
+
+        // --- POS / MOSTRADOR ---
+        function setPosCategory(cat) {
+            state.posCategory = cat;
+            const cats = ['all', 'Proteínas y Ganadores', 'Creatinas y Pre-entrenos', 'Bebidas e Hidratantes', 'Snacks y Alimentos', 'Accesorios / Merch'];
+            cats.forEach(c => {
+                const idBtn = c === 'all' ? 'pos-cat-all' :
+                              c.includes('Proteínas') ? 'pos-cat-prot' :
+                              c.includes('Creatinas') ? 'pos-cat-creat' :
+                              c.includes('Bebidas') ? 'pos-cat-beb' :
+                              c.includes('Snacks') ? 'pos-cat-snack' : 'pos-cat-acc';
+                const btn = document.getElementById(idBtn);
+                if (btn) {
+                    if (c === cat) {
+                        btn.className = "px-2.5 py-1 rounded-md bg-zinc-800 text-white border border-bordercolor whitespace-nowrap";
+                    } else {
+                        btn.className = "px-2.5 py-1 rounded-md bg-zinc-900 text-zinc-400 hover:text-white border border-bordercolor whitespace-nowrap";
+                    }
+                }
+            });
+            renderPosProducts();
+        }
+
+        function renderPosProducts() {
+            const search = document.getElementById('pos-search').value.toLowerCase();
+            const grid = document.getElementById('pos-products-grid');
+            grid.innerHTML = '';
+
+            let filtered = state.inventory.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(search) || p.category.toLowerCase().includes(search);
+                if (!matchesSearch) return false;
+                if (state.posCategory !== 'all' && p.category !== state.posCategory) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-zinc-500 text-sm">No hay productos disponibles.</div>`;
+                return;
+            }
+
+            filtered.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "bg-zinc-900/80 border border-bordercolor hover:border-gold/60 rounded-xl p-3 flex flex-col justify-between cursor-pointer transition-all duration-200 group";
+                card.onclick = () => addToCart(p.id);
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[10px] font-medium text-zinc-500 truncate max-w-[100px]">${escapeHtml(p.category)}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">Stock: ${p.stock}</span>
+                        </div>
+                        <h4 class="font-medium text-white text-xs line-clamp-2 group-hover:text-gold transition-colors">${escapeHtml(p.name)}</h4>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between pt-2 border-t border-zinc-800">
+                        <span class="font-bold text-gold text-sm">$${p.price.toFixed(2)}</span>
+                        <div class="w-6 h-6 rounded-md bg-gold/10 text-gold flex items-center justify-center group-hover:bg-gold group-hover:text-black transition-colors">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function addToCart(productId) {
+            const product = state.inventory.find(p => p.id === productId);
+            if (!product) return;
+            if (product.stock <= 0) {
+                showToast("Producto sin stock disponible", "error");
+                return;
+            }
+
+            const existing = state.cart.find(item => item.id === productId);
+            if (existing) {
+                if (existing.qty + 1 > product.stock) {
+                    showToast("No hay suficiente stock disponible", "error");
+                    return;
+                }
+                existing.qty += 1;
+            } else {
+                state.cart.push({ id: product.id, name: product.name, price: product.price, qty: 1 });
+            }
+            renderCart();
+        }
+
+        function updateCartQty(productId, delta) {
+            const item = state.cart.find(i => i.id === productId);
+            const product = state.inventory.find(p => p.id === productId);
+            if (!item) return;
+            if (!product) {
+                state.cart = state.cart.filter(i => i.id !== productId);
+                renderCart();
+                return;
+            }
+
+            const newQty = item.qty + delta;
+            if (newQty > product.stock) {
+                showToast("Stock máximo alcanzado", "error");
+                return;
+            }
+            if (newQty <= 0) {
+                state.cart = state.cart.filter(i => i.id !== productId);
+            } else {
+                item.qty = newQty;
+            }
+            renderCart();
+        }
+
+        function clearCart() {
+            state.cart = [];
+            renderCart();
+        }
+
+        function setPaymentMethod(method) {
+            state.paymentMethod = method;
+            ['Efectivo', 'Transferencia', 'Tarjeta'].forEach(m => {
+                const idBtn = m === 'Efectivo' ? 'pay-efectivo' : m === 'Transferencia' ? 'pay-transfer' : 'pay-card';
+                const btn = document.getElementById(idBtn);
+                if (m === method) {
+                    btn.className = "py-2 px-3 rounded-lg text-xs font-medium bg-gold text-black font-semibold border border-gold transition-colors";
+                } else {
+                    btn.className = "py-2 px-3 rounded-lg text-xs font-medium bg-zinc-900 text-zinc-400 border border-bordercolor hover:text-white transition-colors";
+                }
+            });
+        }
+
+        function renderCart() {
+            const container = document.getElementById('pos-cart-items');
+            container.innerHTML = '';
+
+            if (state.cart.length === 0) {
+                container.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-zinc-500 text-center py-12">
+                        <i data-lucide="shopping-cart" class="w-10 h-10 mb-2 opacity-40"></i>
+                        <p class="text-sm">El ticket está vacío</p>
+                        <p class="text-xs text-zinc-600">Haz clic en los productos para agregarlos</p>
+                    </div>
+                `;
+                document.getElementById('cart-subtotal').textContent = '$0.00';
+                document.getElementById('cart-total').textContent = '$0.00';
+                lucide.createIcons();
+                return;
+            }
+
+            let subtotal = 0;
+            state.cart.forEach(item => {
+                const itemTotal = item.price * item.qty;
+                subtotal += itemTotal;
+
+                const div = document.createElement('div');
+                div.className = "py-2.5 flex items-center justify-between gap-3";
+                div.innerHTML = `
+                    <div class="flex-1 min-w-0">
+                        <h5 class="font-medium text-white text-xs truncate">${escapeHtml(item.name)}</h5>
+                        <p class="text-[11px] text-zinc-400">$${item.price.toFixed(2)} c/u</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="updateCartQty(${item.id}, -1)" class="w-6 h-6 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center text-xs">-</button>
+                        <span class="text-xs font-semibold text-white w-5 text-center">${item.qty}</span>
+                        <button onclick="updateCartQty(${item.id}, 1)" class="w-6 h-6 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center text-xs">+</button>
+                    </div>
+                    <span class="font-semibold text-gold text-xs w-16 text-right">$${itemTotal.toFixed(2)}</span>
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('cart-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('cart-total').textContent = `$${subtotal.toFixed(2)}`;
+            lucide.createIcons();
+        }
+
+        function checkoutCart() {
+            if (state.cart.length === 0) {
+                showToast("El carrito está vacío", "error");
+                return;
+            }
+            const invalidItem = state.cart.find(item => {
+                const product = state.inventory.find(candidate => candidate.id === item.id);
+                return !product || item.qty > product.stock;
+            });
+            if (invalidItem) {
+                showToast(`Stock insuficiente para ${invalidItem.name}. Actualiza el carrito antes de cobrar.`, "error");
+                return;
+            }
+
+            let totalSale = 0;
+            let concepts = [];
+
+            state.cart.forEach(item => {
+                totalSale += item.price * item.qty;
+                concepts.push(`${item.qty}x ${item.name}`);
+
+                const product = state.inventory.find(p => p.id === item.id);
+                if (product) {
+                    product.stock -= item.qty;
+                    recordStockMovement(product, -item.qty, 'Venta POS');
+                }
+            });
+
+            const newTrx = {
+                id: `TRX-${Math.floor(1000 + Math.random() * 9000)}`,
+                date: new Date().toLocaleDateString('es-PE'),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                concept: `Venta POS: ${concepts.join(', ')}`,
+                staff: state.currentUser.fullname,
+                method: state.paymentMethod,
+                total: totalSale
+            };
+
+            state.transactions.unshift(newTrx);
+            state.cart = [];
+            persistState();
+            renderCart();
+            renderPosProducts();
+            showToast(`¡Venta cobrada con éxito! ($${totalSale.toFixed(2)})`);
+        }
+
+        // --- GLOBAL SEARCH ---
+        function handleGlobalSearch(query) {
+            if (!query.trim()) return;
+            const q = query.toLowerCase();
+            const foundMember = state.members.find(m => m.name.toLowerCase().includes(q) || m.phone.toLowerCase().includes(q) || String(m.dni || '').includes(q));
+            if (foundMember) {
+                switchView('members');
+                document.getElementById('member-search').value = query;
+                renderMembers();
+                return;
+            }
+            const foundProduct = state.inventory.find(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+            if (foundProduct) {
+                switchView('inventory');
+                document.getElementById('inventory-search').value = query;
+                renderInventory();
+                return;
+            }
+        }
+
+        // --- FACTORY RESET ---
+        function resetDataModal() {
+            document.getElementById('reset-modal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('reset-modal').classList.add('hidden');
+        }
+
+        function executeFactoryReset() {
+            localStorage.clear();
+            state.members = [...initialMembers];
+            state.inventory = [...initialInventory];
+            state.transactions = [...initialTransactions];
+            state.users = [...initialUsers];
+            state.stockMovements = [];
+            state.currentUser = { id: 1, fullname: "Mariano CEO", username: "mariano", role: "admin" };
+            state.cart = [];
+            persistState();
+            closeResetModal();
+            switchView('dashboard');
+            showToast("Datos de fábrica restaurados correctamente");
+        }
+
+        // --- INITIALIZE ON LOAD ---
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            renderSidebar();
+            switchView(state.currentView);
+        });
+
+        window.addEventListener('storage', event => {
+            if (event.key === null) {
+                window.location.reload();
+                return;
+            }
+            if (!['gym_members', 'gym_inventory', 'gym_transactions', 'gym_users', 'gym_current_user', 'gym_pending_subscriptions', 'gym_payment_history', 'gym_class_bookings', 'gym_stock_movements'].includes(event.key)) return;
+            if (event.key === 'gym_members') state.members = event.newValue ? JSON.parse(event.newValue) : [...initialMembers];
+            if (event.key === 'gym_inventory') state.inventory = event.newValue ? JSON.parse(event.newValue) : [...initialInventory];
+            if (event.key === 'gym_transactions') state.transactions = event.newValue ? JSON.parse(event.newValue) : [...initialTransactions];
+            if (event.key === 'gym_users') state.users = event.newValue ? JSON.parse(event.newValue) : [...initialUsers];
+            if (event.key === 'gym_current_user') state.currentUser = event.newValue ? JSON.parse(event.newValue) : { id: 1, fullname: "Mariano CEO", username: "mariano", role: "admin" };
+            if (event.key === 'gym_stock_movements') state.stockMovements = JSON.parse(event.newValue || '[]');
+            renderSidebar();
+            if (state.currentView === 'dashboard') renderDashboard();
+            if (state.currentView === 'members') renderMembers();
+            if (state.currentView === 'subscriptions') renderSubscriptions();
+            if (state.currentView === 'classes') renderClassBookings();
+            if (state.currentView === 'inventory') renderInventory();
+        });
+    </script>
+</body>
+</html>

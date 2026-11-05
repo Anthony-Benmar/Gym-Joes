@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joe's Gym Calca - Portal del Socio & Autogestión</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#09090b',
+                        cardbg: '#141416',
+                        cardhover: '#1b1b1f',
+                        bordercolor: '#27272a',
+                        gold: '#d4af37',
+                        goldhover: '#c59b27',
+                        goldlight: '#f3d78f',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #09090b; color: #f4f4f5; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+        .gold-gradient { background: linear-gradient(135deg, #f3d78f 0%, #d4af37 50%, #aa8228 100%); }
+        .gold-text { background: linear-gradient(135deg, #f3d78f 0%, #d4af37 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-gold selection:text-black">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- HEADER / NAVBAR -->
+    <header class="border-b border-bordercolor bg-cardbg/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4 md:py-0 md:h-20 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gold/10 border border-gold/30 flex items-center justify-center text-gold shadow-lg shadow-gold/5">
+                    <i data-lucide="crown" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg tracking-tight text-white flex items-center gap-1.5">
+                        JOE'S GYM <span class="gold-text">CALCA</span>
+                    </h1>
+                    <p class="text-xs text-zinc-400 font-medium">Portal Exclusivo de Socios & Membresías</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
+                <button onclick="switchTab('plans')" id="nav-plans-btn" class="px-4 py-2 rounded-xl text-xs font-semibold bg-gold text-black transition-all flex items-center gap-2 shadow-md shadow-gold/10 whitespace-nowrap">
+                    <i data-lucide="zap" class="w-4 h-4"></i> Comprar Membresía
+                </button>
+                <button onclick="switchTab('status')" id="nav-status-btn" class="px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-900 text-zinc-300 hover:text-white border border-bordercolor transition-all flex items-center gap-2 whitespace-nowrap">
+                    <i data-lucide="user-check" class="w-4 h-4 text-gold"></i> Consultar mi Estado (DNI)
+                </button>
+                <button onclick="switchTab('classes')" id="nav-classes-btn" class="px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-900 text-zinc-300 hover:text-white border border-bordercolor transition-all flex items-center gap-2 whitespace-nowrap">
+                    <i data-lucide="calendar-days" class="w-4 h-4 text-gold"></i> Clases
+                </button>
+                <button onclick="switchTab('history')" id="nav-history-btn" class="px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-900 text-zinc-300 hover:text-white border border-bordercolor transition-all flex items-center gap-2 whitespace-nowrap">
+                    <i data-lucide="receipt-text" class="w-4 h-4 text-gold"></i> Mis pagos
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8">
+
+        <!-- TAB 1: COMPRAR SUSCRIPCIÓN & PLANES -->
+        <section id="section-plans" class="space-y-8">
+            <div class="text-center max-w-2xl mx-auto space-y-3">
+                <span class="px-3 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold text-xs font-bold uppercase tracking-wider">Entrena con Elite</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Elige tu Plan y Empieza Hoy</h2>
+                <p class="text-sm text-zinc-400">Selecciona tu membresía, realiza tu pago mediante transferencia o Yape/Plin, sube tu comprobante y accede de inmediato al ser aprobado por recepción.</p>
+            </div>
+
+            <!-- PLAN CARDS GRID -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                <!-- PLAN 1 -->
+                <div class="bg-cardbg border border-bordercolor hover:border-gold/50 rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 shadow-xl group relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full blur-2xl group-hover:bg-gold/15 transition-all"></div>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-zinc-400 uppercase tracking-widest">Acceso Inmediato</span>
+                            <span class="px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 text-xs font-medium border border-bordercolor">1 Día</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Pase Diario</h3>
+                            <p class="text-xs text-zinc-400 mt-1">Ideal para visitas ocasionales o entrenamiento puntual.</p>
+                        </div>
+                        <div class="py-3 border-y border-bordercolor flex items-baseline gap-1">
+                            <span class="text-3xl font-extrabold text-gold">$10.00</span>
+                            <span class="text-xs text-zinc-400">/ único pago</span>
+                        </div>
+                        <ul class="space-y-2.5 text-xs text-zinc-300">
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-gold"></i> Acceso libre a máquinas y pesas</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-gold"></i> Casillero y ducha incluida</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-gold"></i> Validez por el día de compra</li>
+                        </ul>
+                    </div>
+                    <button onclick="openCheckoutModal('Pase Diario', 10.00)" class="mt-6 w-full py-3 bg-zinc-800 hover:bg-gold hover:text-black text-white font-bold rounded-xl transition-all text-xs flex items-center justify-center gap-2 border border-bordercolor group-hover:border-gold">
+                        Comprar Pase Diario <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- PLAN 2 (POPULAR / HIGHLIGHTED) -->
+                <div class="bg-cardbg border-2 border-gold rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 shadow-2xl relative overflow-hidden scale-[1.02]">
+                    <div class="absolute top-0 right-0 bg-gold text-black text-[10px] font-extrabold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Más Popular</div>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gold uppercase tracking-widest">Compromiso Mensual</span>
+                            <span class="px-2.5 py-1 rounded-full bg-gold/10 text-gold text-xs font-bold border border-gold/30">30 Días</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Plan Mensual Elite</h3>
+                            <p class="text-xs text-zinc-400 mt-1">El favorito para transformar tu físico con constancia.</p>
+                        </div>
+                        <div class="py-3 border-y border-bordercolor flex items-baseline gap-1">
+                            <span class="text-3xl font-extrabold text-gold">$60.00</span>
+                            <span class="text-xs text-zinc-400">/ mes</span>
+                        </div>
+                        <ul class="space-y-2.5 text-xs text-zinc-300">
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-gold"></i> Acceso ilimitado 24/7 (según horario)</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-gold"></i> Evaluación física y rutina inicial</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-gold"></i> 1 Invitación para un amigo por mes</li>
+                        </ul>
+                    </div>
+                    <button onclick="openCheckoutModal('Plan Mensual', 60.00)" class="mt-6 w-full py-3 bg-gold hover:bg-goldhover text-black font-bold rounded-xl transition-all text-xs flex items-center justify-center gap-2 shadow-lg shadow-gold/10">
+                        Comprar Plan Mensual <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- PLAN 3 -->
+                <div class="bg-cardbg border border-bordercolor hover:border-gold/50 rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 shadow-xl group relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full blur-2xl group-hover:bg-gold/15 transition-all"></div>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-zinc-400 uppercase tracking-widest">Máximo Ahorro</span>
+                            <span class="px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 text-xs font-medium border border-bordercolor">90 Días</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Plan Trimestral</h3>
+                            <p class="text-xs text-zinc-400 mt-1">Resultados sólidos garantizados con tarifa preferencial.</p>
+                        </div>
+                        <div class="py-3 border-y border-bordercolor flex items-baseline gap-1">
+                            <span class="text-3xl font-extrabold text-gold">$150.00</span>
+                            <span class="text-xs text-zinc-400">/ 3 meses</span>
+                        </div>
+                        <ul class="space-y-2.5 text-xs text-zinc-300">
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-gold"></i> Acceso total ilimitado</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-gold"></i> Asesoría nutricional básica</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-gold"></i> Congelamiento de membresía (15 días)</li>
+                        </ul>
+                    </div>
+                    <button onclick="openCheckoutModal('Plan Trimestral', 150.00)" class="mt-6 w-full py-3 bg-zinc-800 hover:bg-gold hover:text-black text-white font-bold rounded-xl transition-all text-xs flex items-center justify-center gap-2 border border-bordercolor group-hover:border-gold">
+                        Comprar Trimestral <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: CONSULTAR ESTADO CON DNI -->
+        <section id="section-status" class="space-y-8 hidden max-w-3xl mx-auto">
+            <div class="text-center space-y-3">
+                <span class="px-3 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold text-xs font-bold uppercase tracking-wider">Acceso Rápido</span>
+                <h2 class="text-3xl font-extrabold text-white tracking-tight">Consulta tu Estado con tu DNI</h2>
+                <p class="text-sm text-zinc-400">Ingresa tu número de DNI para verificar si tu pago ya fue aprobado por recepción, ver el estado de tu membresía y mostrar tu código QR de ingreso.</p>
+            </div>
+
+            <div class="bg-cardbg border border-bordercolor rounded-2xl p-6 md:p-8 shadow-xl space-y-6">
+                <div class="flex gap-3">
+                    <div class="relative flex-1">
+                        <i data-lucide="id-card" class="w-5 h-5 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="lookup-dni" placeholder="Ingresa tu Nº de DNI (ej. 48291023)" class="w-full bg-zinc-900 border border-bordercolor rounded-xl pl-12 pr-4 py-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-gold">
+                    </div>
+                    <button onclick="lookupMembership()" class="px-6 py-3.5 bg-gold hover:bg-goldhover text-black font-bold rounded-xl transition-all text-sm flex items-center gap-2 shadow-md shadow-gold/10 shrink-0">
+                        <i data-lucide="search" class="w-4 h-4"></i> Consultar
+                    </button>
+                </div>
+
+                <div id="lookup-result-container" class="hidden pt-4 border-t border-bordercolor">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+        </section>
+
+        <section id="section-classes" class="space-y-8 hidden">
+            <div class="max-w-3xl space-y-3">
+                <span class="px-3 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold text-xs font-bold uppercase tracking-wider">Entrena en comunidad</span>
+                <h2 class="text-3xl font-extrabold text-white tracking-tight">Clases grupales</h2>
+                <p class="text-sm text-zinc-400">Reserva tu lugar en las próximas sesiones. Se requiere una membresía activa y los cupos son limitados.</p>
+            </div>
+            <div id="class-schedule" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+            <div class="bg-cardbg border border-bordercolor rounded-2xl overflow-hidden">
+                <div class="px-5 py-4 border-b border-bordercolor">
+                    <h3 class="font-semibold text-white">Mis próximas reservas</h3>
+                    <p class="text-xs text-zinc-400 mt-1">Consulta tus reservas ingresando tu DNI.</p>
+                </div>
+                <div class="p-5 flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="class-booking-dni" inputmode="numeric" minlength="8" maxlength="12" pattern="[0-9]{8,12}" placeholder="DNI asociado a tu membresía" class="flex-1 bg-zinc-900 border border-bordercolor rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-gold">
+                    <button onclick="lookupClassBookings()" class="px-5 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-sm font-semibold">Consultar reservas</button>
+                </div>
+                <div id="my-bookings" class="px-5 pb-5"></div>
+            </div>
+        </section>
+
+        <section id="section-history" class="space-y-8 hidden max-w-3xl mx-auto">
+            <div class="text-center space-y-3">
+                <span class="px-3 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold text-xs font-bold uppercase tracking-wider">Transparencia</span>
+                <h2 class="text-3xl font-extrabold text-white tracking-tight">Historial de pagos</h2>
+                <p class="text-sm text-zinc-400">Consulta el estado de tus comprobantes y las observaciones de recepción con tu DNI.</p>
+            </div>
+            <div class="bg-cardbg border border-bordercolor rounded-2xl p-6 shadow-xl space-y-5">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="history-dni" inputmode="numeric" minlength="8" maxlength="12" pattern="[0-9]{8,12}" placeholder="Ingresa tu DNI" class="flex-1 bg-zinc-900 border border-bordercolor rounded-xl px-4 py-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-gold">
+                    <button onclick="lookupPaymentHistory()" class="px-6 py-3.5 bg-gold hover:bg-goldhover text-black font-bold rounded-xl text-sm">Consultar pagos</button>
+                </div>
+                <div id="payment-history-results" class="space-y-3"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- CHECKOUT & DEPOSIT VOUCHER MODAL -->
+    <div id="checkout-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardbg border border-bordercolor rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
+            <div class="px-6 py-5 border-b border-bordercolor flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-white text-base">Paso 1: Realiza tu Pago & Sube tu Voucher</h3>
+                    <p class="text-xs text-zinc-400">Estás adquiriendo: <span id="modal-plan-name" class="text-gold font-semibold">Plan Mensual</span></p>
+                </div>
+                <button onclick="closeCheckoutModal()" class="text-zinc-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+                <!-- BANK ACCOUNTS BOX -->
+                <div class="bg-zinc-900/80 border border-bordercolor rounded-xl p-4 space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-gold flex items-center gap-2">
+                        <i data-lucide="landmark" class="w-4 h-4"></i> Cuentas Oficiales Joe's Gym Calca
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div class="bg-cardbg p-3 rounded-lg border border-bordercolor space-y-1">
+                            <p class="font-bold text-white">BCP Soles</p>
+                            <p class="font-mono text-gold text-sm">215-98321450-0-12</p>
+                            <p class="text-[10px] text-zinc-400">CCI: 002-215109832145001223</p>
+                        </div>
+                        <div class="bg-cardbg p-3 rounded-lg border border-bordercolor space-y-1">
+                            <p class="font-bold text-white">Yape / Plin (Dueño)</p>
+                            <p class="font-mono text-gold text-sm">+51 987 654 321</p>
+                            <p class="text-[10px] text-zinc-400">Titular: Mariano CEO</p>
+                        </div>
+                    </div>
+                    <div class="pt-2 flex items-center justify-between text-sm font-semibold text-white">
+                        <span>Monto a Transferir:</span>
+                        <span id="modal-plan-price" class="text-xl text-gold">$60.00</span>
+                    </div>
+                </div>
+
+                <div id="class-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+                    <div class="bg-cardbg border border-bordercolor rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+                        <div class="px-6 py-5 border-b border-bordercolor flex items-center justify-between">
+                            <div>
+                                <h3 class="font-bold text-white">Reservar clase</h3>
+                                <p id="class-modal-detail" class="text-xs text-gold mt-1"></p>
+                            </div>
+                            <button onclick="closeClassModal()" class="text-zinc-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                        </div>
+                        <form onsubmit="submitClassBooking(event)" class="p-6 space-y-4">
+                            <input type="hidden" id="class-name">
+                            <input type="hidden" id="class-date">
+                            <input type="hidden" id="class-time">
+                            <div>
+                                <label class="block text-xs font-medium text-zinc-400 mb-1">Nombre completo</label>
+                                <input type="text" id="class-client-name" required class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-gold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-zinc-400 mb-1">DNI de tu membresía</label>
+                                <input type="text" id="class-client-dni" required inputmode="numeric" minlength="8" maxlength="12" pattern="[0-9]{8,12}" class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-gold">
+                            </div>
+                            <div class="flex justify-end gap-3 pt-2">
+                                <button type="button" onclick="closeClassModal()" class="px-4 py-2 rounded-lg bg-zinc-800 text-white text-sm">Cancelar</button>
+                                <button type="submit" class="px-4 py-2 rounded-lg bg-gold hover:bg-goldhover text-black font-semibold text-sm">Confirmar reserva</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- VOUCHER SUBMISSION FORM -->
+                <form id="voucher-form" onsubmit="submitVoucher(event)" class="space-y-4">
+                    <input type="hidden" id="form-plan-name">
+                    <input type="hidden" id="form-plan-price">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-400 mb-1">Nombre Completo</label>
+                            <input type="text" id="client-name" required placeholder="Ej. Juan Pérez" class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-400 mb-1">Nº de DNI (Clave de Acceso)</label>
+                            <input type="text" id="client-dni" required inputmode="numeric" minlength="8" maxlength="12" pattern="[0-9]{8,12}" placeholder="Ej. 48291023" class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-400 mb-1">Teléfono / WhatsApp</label>
+                            <input type="text" id="client-phone" required placeholder="Ej. +51 987654321" class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-400 mb-1">Nº de Operación / Voucher</label>
+                            <input type="text" id="client-voucher" required placeholder="Ej. OP-994821" class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Comprobante de pago (imagen o PDF, máximo 1.5 MB)</label>
+                        <input type="file" id="client-file" accept="image/png,image/jpeg,image/webp,application/pdf" required class="w-full bg-zinc-900 border border-bordercolor rounded-lg px-3 py-2 text-sm text-zinc-300 file:mr-3 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-3 file:py-2 file:text-xs file:text-white">
+                    </div>
+
+                    <div class="pt-4 border-t border-bordercolor flex items-center justify-end gap-3">
+                        <button type="button" onclick="closeCheckoutModal()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-medium rounded-lg transition-colors">Cancelar</button>
+                        <button type="submit" class="px-5 py-2.5 bg-gold hover:bg-goldhover text-black font-bold text-xs rounded-lg transition-colors shadow-md">
+                            Enviar Voucher a Recepción
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-zinc-900 border-gold/40 text-gold' : 'bg-zinc-900 border-red-500/40 text-red-400';
+            const iconName = type === 'success' ? 'check-circle' : 'alert-circle';
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${bgClass}`;
+            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i>`;
+            const label = document.createElement('span');
+            label.textContent = message;
+            toast.appendChild(label);
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function switchTab(tabId) {
+            const plansSec = document.getElementById('section-plans');
+            const statusSec = document.getElementById('section-status');
+            const classesSec = document.getElementById('section-classes');
+            const historySec = document.getElementById('section-history');
+            const plansBtn = document.getElementById('nav-plans-btn');
+            const statusBtn = document.getElementById('nav-status-btn');
+            const classesBtn = document.getElementById('nav-classes-btn');
+            const historyBtn = document.getElementById('nav-history-btn');
+            const sections = { plans: plansSec, status: statusSec, classes: classesSec, history: historySec };
+            const buttons = { plans: plansBtn, status: statusBtn, classes: classesBtn, history: historyBtn };
+            Object.keys(sections).forEach(key => {
+                sections[key].classList.toggle('hidden', key !== tabId);
+                buttons[key].className = key === tabId
+                    ? "px-4 py-2 rounded-xl text-xs font-semibold bg-gold text-black transition-all flex items-center gap-2 shadow-md shadow-gold/10"
+                    : "px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-900 text-zinc-300 hover:text-white border border-bordercolor transition-all flex items-center gap-2";
+            });
+            if (tabId === 'classes') renderClassSchedule();
+        }
+
+        function openCheckoutModal(planName, price) {
+            document.getElementById('modal-plan-name').textContent = planName;
+            document.getElementById('modal-plan-price').textContent = `$${price.toFixed(2)}`;
+            document.getElementById('form-plan-name').value = planName;
+            document.getElementById('form-plan-price').value = price;
+            document.getElementById('checkout-modal').classList.remove('hidden');
+        }
+
+        function closeCheckoutModal() {
+            document.getElementById('checkout-modal').classList.add('hidden');
+        }
+
+        async function submitVoucher(e) {
+            e.preventDefault();
+            const name = document.getElementById('client-name').value.trim();
+            const dni = document.getElementById('client-dni').value.trim();
+            const phone = document.getElementById('client-phone').value.trim();
+            const voucher = document.getElementById('client-voucher').value.trim();
+            const plan = document.getElementById('form-plan-name').value;
+            const price = Number(document.getElementById('form-plan-price').value);
+            const file = document.getElementById('client-file').files[0];
+            if (!file || file.size > 1.5 * 1024 * 1024) {
+                showToast(file ? "El archivo supera el límite de 1.5 MB." : "Adjunta una imagen o PDF del comprobante.", "error");
+                return;
+            }
+            if (!/^(image\/(png|jpeg|webp)|application\/pdf)$/.test(file.type)) {
+                showToast("Formato no permitido. Usa una imagen PNG, JPG, WEBP o un PDF.", "error");
+                return;
+            }
+            let voucherFile;
+            try {
+                voucherFile = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = () => reject(new Error("No se pudo leer el comprobante."));
+                    reader.readAsDataURL(file);
+                });
+            } catch (error) {
+                showToast(error.message, "error");
+                return;
+            }
+
+            const pendingSub = {
+                id: Date.now(),
+                name,
+                dni,
+                phone,
+                voucher,
+                voucherFile,
+                voucherFileName: file.name,
+                plan,
+                price,
+                date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+
+            // Save to localStorage shared with gym_manager.html
+            let pending = JSON.parse(localStorage.getItem('gym_pending_subscriptions')) || [];
+            if (pending.some(item => item.dni === dni)) {
+                showToast("Ya tienes un pago pendiente de validación para este DNI.", "error");
+                return;
+            }
+            const previousPending = localStorage.getItem('gym_pending_subscriptions');
+            const previousHistory = localStorage.getItem('gym_payment_history');
+            const dniKey = `gym_client_dni_${dni}`;
+            const previousDniRecord = localStorage.getItem(dniKey);
+            pending.unshift(pendingSub);
+            const history = JSON.parse(previousHistory || '[]');
+            const historyEntry = { ...pendingSub };
+            delete historyEntry.voucherFile;
+            history.unshift({ ...historyEntry, status: 'Pendiente', note: 'Comprobante recibido. En espera de validación.', reviewedAt: '' });
+            try {
+                localStorage.setItem('gym_pending_subscriptions', JSON.stringify(pending));
+                localStorage.setItem('gym_payment_history', JSON.stringify(history));
+                localStorage.setItem(dniKey, JSON.stringify({ name, plan, status: 'Pendiente de Aprobación', voucher, date: pendingSub.date }));
+            } catch (error) {
+                if (previousPending === null) localStorage.removeItem('gym_pending_subscriptions');
+                else localStorage.setItem('gym_pending_subscriptions', previousPending);
+                if (previousHistory === null) localStorage.removeItem('gym_payment_history');
+                else localStorage.setItem('gym_payment_history', previousHistory);
+                if (previousDniRecord === null) localStorage.removeItem(dniKey);
+                else localStorage.setItem(dniKey, previousDniRecord);
+                showToast("No se pudo guardar la solicitud. Libera espacio del navegador e inténtalo de nuevo.", "error");
+                return;
+            }
+
+            closeCheckoutModal();
+            document.getElementById('voucher-form').reset();
+            showToast("¡Voucher enviado con éxito! Recepción lo validará en breve.");
+
+            // Switch to status tab to let them check
+            setTimeout(() => {
+                switchTab('status');
+                document.getElementById('lookup-dni').value = dni;
+                lookupMembership();
+            }, 1000);
+        }
+
+        function lookupMembership() {
+            const dni = document.getElementById('lookup-dni').value.trim();
+            const container = document.getElementById('lookup-result-container');
+            container.classList.remove('hidden');
+
+            if (!/^\d{8,12}$/.test(dni)) {
+                container.innerHTML = `<p class="text-center text-red-400 text-sm">Ingresa un DNI válido de 8 a 12 dígitos.</p>`;
+                return;
+            }
+
+            // 1. Check if active in members
+            const members = JSON.parse(localStorage.getItem('gym_members')) || [];
+            let matchedMember = members.find(m => String(m.dni || '') === dni);
+
+            // 2. Check if pending
+            const pending = JSON.parse(localStorage.getItem('gym_pending_subscriptions')) || [];
+            let matchedPending = pending.find(p => p.dni === dni);
+            const history = JSON.parse(localStorage.getItem('gym_payment_history')) || [];
+            const paymentHistory = history.filter(payment => payment.dni === dni);
+
+            if (matchedMember) {
+                const expiry = new Date(`${matchedMember.end}T23:59:59`);
+                const membershipActive = ['Activo', 'Por Vencer'].includes(matchedMember.status) && !Number.isNaN(expiry.getTime()) && expiry >= new Date();
+                const memberStatusText = membershipActive ? 'Membresía activa' : 'Membresía vencida o inactiva';
+                const memberStatusClass = membershipActive ? 'text-emerald-400' : 'text-red-400';
+                container.innerHTML = `
+                    <div class="bg-zinc-900 border border-emerald-500/30 rounded-xl p-6 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-lg">
+                                    ${escapeHtml(matchedMember.name.charAt(0))}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-white text-lg">${escapeHtml(matchedMember.name)}</h4>
+                                    <p class="text-xs ${memberStatusClass} font-semibold flex items-center gap-1"><i data-lucide="${membershipActive ? 'check-circle' : 'alert-circle'}" class="w-3.5 h-3.5"></i> ${memberStatusText}</p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 rounded-full ${membershipActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'} text-xs font-bold border">${membershipActive ? 'ACTIVO' : 'INACTIVO'}</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                            <div class="bg-cardbg p-3 rounded-lg border border-bordercolor">
+                                <span class="text-zinc-400 block">Plan Actual</span>
+                                <strong class="text-white text-sm">${escapeHtml(matchedMember.plan)}</strong>
+                            </div>
+                            <div class="bg-cardbg p-3 rounded-lg border border-bordercolor">
+                                <span class="text-zinc-400 block">Fecha Inicio</span>
+                                <strong class="text-white text-sm">${escapeHtml(matchedMember.start)}</strong>
+                            </div>
+                            <div class="bg-cardbg p-3 rounded-lg border border-bordercolor col-span-2 sm:col-span-1">
+                                <span class="text-zinc-400 block">Vencimiento</span>
+                                <strong class="text-gold text-sm">${escapeHtml(matchedMember.end)}</strong>
+                            </div>
+                        </div>
+                        ${membershipActive ? `<div class="pt-4 border-t border-bordercolor text-center space-y-2"><p class="text-xs text-zinc-400">Presenta este código QR en recepción para ingresar al gimnasio:</p><div id="member-qr" class="w-36 h-36 bg-white rounded-xl mx-auto flex items-center justify-center p-2 shadow-inner" aria-label="Código QR de acceso"></div><p id="member-qr-fallback" class="hidden text-xs text-amber-400">No se pudo cargar el generador de QR. Intenta actualizar la página.</p></div>` : ''}
+                    </div>
+                `;
+                if (paymentHistory.length) {
+                    container.innerHTML += renderMemberPaymentSummary(paymentHistory);
+                }
+                if (membershipActive) {
+                    const qrContainer = document.getElementById('member-qr');
+                    if (window.QRCode) {
+                        new QRCode(qrContainer, { text: `IRONFIT-MEMBER:${matchedMember.id}`, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.M });
+                    } else {
+                        document.getElementById('member-qr-fallback').classList.remove('hidden');
+                    }
+                }
+            } else if (matchedPending) {
+                container.innerHTML = `
+                    <div class="bg-zinc-900 border border-amber-500/30 rounded-xl p-6 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold text-lg">
+                                    ${escapeHtml(matchedPending.name.charAt(0))}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-white text-lg">${escapeHtml(matchedPending.name)}</h4>
+                                    <p class="text-xs text-amber-400 font-semibold flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> Voucher en Proceso de Validación</p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20">PENDIENTE</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 pt-2 text-xs">
+                            <div class="bg-cardbg p-3 rounded-lg border border-bordercolor">
+                                <span class="text-zinc-400 block">Plan Solicitado</span>
+                                <strong class="text-white text-sm">${escapeHtml(matchedPending.plan)}</strong>
+                            </div>
+                            <div class="bg-cardbg p-3 rounded-lg border border-bordercolor">
+                                <span class="text-zinc-400 block">Nº de Operación</span>
+                                <strong class="text-gold text-sm font-mono">${escapeHtml(matchedPending.voucher)}</strong>
+                            </div>
+                        </div>
+                        <p class="text-xs text-zinc-400 bg-cardbg p-3 rounded-lg border border-bordercolor text-center">
+                            Tu pago fue recibido. El administrador de Joe's Gym Calca verificará el depósito y activará tu acceso en breve.
+                        </p>
+                    </div>
+                `;
+            } else if (paymentHistory.length) {
+                container.innerHTML = renderMemberPaymentSummary(paymentHistory);
+            } else {
+                container.innerHTML = `
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center space-y-3">
+                        <div class="w-12 h-12 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center mx-auto">
+                            <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                        </div>
+                        <h4 class="font-bold text-white text-base">No se encontró membresía activa ni pagos pendientes</h4>
+                        <p class="text-xs text-zinc-400 max-w-md mx-auto">No hay registros asociados al DNI <strong>${escapeHtml(dni)}</strong>. Si acabas de realizar tu pago, asegúrate de haber enviado tu voucher desde la sección de planes.</p>
+                    </div>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        function escapeHtml(value) {
+                return String(value == null ? '' : value).replace(/[&<>"']/g, character => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                })[character]);
+        }
+
+        function formatClassDate(dateValue) {
+                return new Date(`${dateValue}T12:00:00`).toLocaleDateString('es-PE', {
+                    weekday: 'long', day: 'numeric', month: 'long'
+                });
+        }
+
+        function renderMemberPaymentSummary(history) {
+                const rows = history.slice().sort((a, b) => String(b.date).localeCompare(String(a.date))).map(payment => {
+                    const color = payment.status === 'Aprobado' ? 'text-emerald-400' : payment.status === 'Rechazado' ? 'text-red-400' : 'text-amber-400';
+                    return `<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3 border-t border-bordercolor"><div><strong class="text-white text-sm">${escapeHtml(payment.plan)}</strong><span class="block text-xs text-zinc-500">${escapeHtml(payment.date)}</span><span class="block text-xs text-zinc-400">${escapeHtml(payment.note || '')}</span></div><span class="text-xs font-semibold ${color}">${escapeHtml(payment.status)}</span></div>`;
+                }).join('');
+                return `<div class="bg-zinc-900 border border-bordercolor rounded-xl p-5 space-y-2"><h4 class="font-semibold text-white text-sm">Historial de pagos</h4>${rows}</div>`;
+        }
+
+        function lookupPaymentHistory() {
+                const dni = document.getElementById('history-dni').value.trim();
+                const container = document.getElementById('payment-history-results');
+                if (!/^\d{8,12}$/.test(dni)) {
+                    container.innerHTML = '<p class="text-sm text-red-400">Ingresa un DNI válido de 8 a 12 dígitos.</p>';
+                    return;
+                }
+                const history = JSON.parse(localStorage.getItem('gym_payment_history')) || [];
+                const matches = history.filter(payment => payment.dni === dni);
+                container.innerHTML = matches.length
+                    ? renderMemberPaymentSummary(matches)
+                    : '<div class="rounded-xl border border-bordercolor bg-zinc-900 p-5 text-center text-sm text-zinc-400">No encontramos pagos asociados a ese DNI.</div>';
+        }
+
+        function getUpcomingClassDates() {
+                const today = new Date();
+                const classes = [
+                    { name: 'Fuerza & acondicionamiento', coach: 'Entrenamiento funcional', time: '07:00', day: 1, level: 'Todos los niveles', icon: 'dumbbell' },
+                    { name: 'Spinning', coach: 'Cardio indoor', time: '18:30', day: 1, level: 'Intermedio', icon: 'bike' },
+                    { name: 'Power HIIT', coach: 'Alta intensidad', time: '07:00', day: 2, level: 'Intermedio / avanzado', icon: 'zap' },
+                    { name: 'Yoga & movilidad', coach: 'Flexibilidad y recuperación', time: '19:00', day: 3, level: 'Todos los niveles', icon: 'flower-2' },
+                    { name: 'Box fit', coach: 'Técnica y cardio', time: '18:30', day: 4, level: 'Todos los niveles', icon: 'target' },
+                    { name: 'Bootcamp', coach: 'Circuito de fuerza', time: '09:00', day: 6, level: 'Todos los niveles', icon: 'flame' }
+                ];
+                return classes.map(session => {
+                    const date = new Date(today);
+                    let offset = (session.day - date.getDay() + 7) % 7;
+                    if (offset === 0) offset = 7;
+                    date.setDate(date.getDate() + offset);
+                    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                    return { ...session, date: dateKey };
+                });
+        }
+
+        function renderClassSchedule() {
+                const container = document.getElementById('class-schedule');
+                const bookings = JSON.parse(localStorage.getItem('gym_class_bookings')) || [];
+                container.innerHTML = '';
+                getUpcomingClassDates().forEach(session => {
+                    const count = bookings.filter(item => item.className === session.name && item.date === session.date).length;
+                    const card = document.createElement('article');
+                    card.className = 'bg-cardbg border border-bordercolor hover:border-gold/50 rounded-2xl p-5 flex flex-col justify-between shadow-lg transition-colors';
+                    card.innerHTML = `<div><div class="flex items-start justify-between"><div class="w-11 h-11 rounded-xl bg-gold/10 border border-gold/20 text-gold flex items-center justify-center"><i data-lucide="${session.icon}" class="w-5 h-5"></i></div><span class="text-xs px-2.5 py-1 rounded-full bg-zinc-900 border border-bordercolor text-zinc-300">${escapeHtml(session.level)}</span></div><h3 class="font-bold text-white text-lg mt-4">${escapeHtml(session.name)}</h3><p class="text-xs text-zinc-400 mt-1">${escapeHtml(session.coach)}</p><div class="mt-4 space-y-2 text-sm"><p class="text-zinc-300"><span class="text-gold">Fecha</span> · ${escapeHtml(formatClassDate(session.date))}</p><p class="text-zinc-300"><span class="text-gold">Hora</span> · ${escapeHtml(session.time)}</p><p class="text-zinc-400 text-xs">${Math.max(0, 12 - count)} cupos disponibles</p></div></div><button ${count >= 12 ? 'disabled' : ''} onclick="openClassModal('${escapeHtml(session.name)}','${session.date}','${session.time}')" class="mt-5 w-full py-3 rounded-xl font-semibold text-sm ${count >= 12 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-zinc-900 hover:bg-gold hover:text-black text-white border border-bordercolor hover:border-gold'}">${count >= 12 ? 'Clase completa' : 'Reservar lugar'}</button>`;
+                    container.appendChild(card);
+                });
+                lucide.createIcons();
+        }
+
+        function openClassModal(className, date, time) {
+                document.getElementById('class-name').value = className;
+                document.getElementById('class-date').value = date;
+                document.getElementById('class-time').value = time;
+                document.getElementById('class-modal-detail').textContent = `${className} · ${date} · ${time}`;
+                document.getElementById('class-modal').classList.remove('hidden');
+        }
+
+        function closeClassModal() {
+                document.getElementById('class-modal').classList.add('hidden');
+        }
+
+        function submitClassBooking(event) {
+                event.preventDefault();
+                const dni = document.getElementById('class-client-dni').value.trim();
+                const name = document.getElementById('class-client-name').value.trim();
+                const className = document.getElementById('class-name').value;
+                const date = document.getElementById('class-date').value;
+                const time = document.getElementById('class-time').value;
+                if (!/^\d{8,12}$/.test(dni)) {
+                    showToast('Ingresa un DNI válido de 8 a 12 dígitos.', 'error');
+                    return;
+                }
+                const members = JSON.parse(localStorage.getItem('gym_members')) || [];
+                const member = members.find(item => String(item.dni || '') === dni && ['Activo', 'Por Vencer'].includes(item.status));
+                if (!member) {
+                    showToast('Necesitas una membresía activa registrada con este DNI para reservar.', 'error');
+                    return;
+                }
+                if (name.toLocaleLowerCase() !== member.name.trim().toLocaleLowerCase()) {
+                    showToast('El nombre debe coincidir con el titular de la membresía.', 'error');
+                    return;
+                }
+                const end = new Date(`${member.end}T23:59:59`);
+                if (Number.isNaN(end.getTime()) || end < new Date()) {
+                    showToast('Tu membresía está vencida. Renueva tu plan para reservar clases.', 'error');
+                    return;
+                }
+                const bookings = JSON.parse(localStorage.getItem('gym_class_bookings')) || [];
+                if (bookings.some(item => item.dni === dni && item.date === date && item.time === time)) {
+                    showToast('Ya tienes una reserva para ese horario.', 'error');
+                    return;
+                }
+                if (bookings.filter(item => item.className === className && item.date === date).length >= 12) {
+                    showToast('La clase ya no tiene cupos disponibles.', 'error');
+                    renderClassSchedule();
+                    return;
+                }
+                bookings.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, dni, name: member.name, className, date, time, status: 'Reservada', createdAt: new Date().toISOString() });
+                localStorage.setItem('gym_class_bookings', JSON.stringify(bookings));
+                document.getElementById('class-client-dni').value = '';
+                document.getElementById('class-client-name').value = '';
+                closeClassModal();
+                renderClassSchedule();
+                showToast('¡Reserva confirmada! Te esperamos.');
+        }
+
+        function lookupClassBookings() {
+                const dni = document.getElementById('class-booking-dni').value.trim();
+                const container = document.getElementById('my-bookings');
+                if (!/^\d{8,12}$/.test(dni)) {
+                    container.innerHTML = '<p class="text-sm text-red-400">Ingresa un DNI válido de 8 a 12 dígitos.</p>';
+                    return;
+                }
+                const today = new Date();
+                const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                const bookings = (JSON.parse(localStorage.getItem('gym_class_bookings')) || []).filter(item => item.dni === dni && item.date >= todayKey);
+                container.innerHTML = bookings.length
+                    ? bookings.map(item => `<div class="flex items-center justify-between gap-3 border-t border-bordercolor py-3"><div><strong class="text-sm text-white">${escapeHtml(item.className)}</strong><p class="text-xs text-zinc-400">${escapeHtml(formatClassDate(item.date))} · ${escapeHtml(item.time)}</p></div><button onclick="cancelMyBooking('${escapeHtml(item.id)}','${escapeHtml(dni)}')" class="text-xs text-red-400 hover:text-red-300">Cancelar</button></div>`).join('')
+                    : '<p class="text-sm text-zinc-400">No hay reservas asociadas a este DNI.</p>';
+        }
+
+        function cancelMyBooking(id, dni) {
+                const bookings = JSON.parse(localStorage.getItem('gym_class_bookings')) || [];
+                localStorage.setItem('gym_class_bookings', JSON.stringify(bookings.filter(item => !(String(item.id) === String(id) && item.dni === dni))));
+                lookupClassBookings();
+                renderClassSchedule();
+                showToast('Tu reserva fue cancelada.');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            renderClassSchedule();
+        });
+
+        window.addEventListener('storage', event => {
+            if (!['gym_members', 'gym_pending_subscriptions', 'gym_payment_history', 'gym_class_bookings'].includes(event.key)) return;
+            if (!document.getElementById('section-classes').classList.contains('hidden')) {
+                renderClassSchedule();
+                if (document.getElementById('class-booking-dni').value.trim()) lookupClassBookings();
+            }
+            if (!document.getElementById('section-history').classList.contains('hidden') && document.getElementById('history-dni').value.trim()) {
+                lookupPaymentHistory();
+            }
+            if (!document.getElementById('section-status').classList.contains('hidden') && document.getElementById('lookup-dni').value.trim()) {
+                lookupMembership();
+            }
+        });
+    </script>
+</body>
+</html>
