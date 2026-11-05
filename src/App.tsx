@@ -4,25 +4,19 @@ import {
   Activity, ArrowDownToLine, ArrowRight, BadgeCheck, Bike, CalendarDays, Check,
   CheckCircle2, ChevronDown, CircleDollarSign, Clock3, Crown, Dumbbell, FileCheck2, Filter,
   Flower2, IdCard, LayoutDashboard, LogOut, Menu, Package, Pencil, Plus, Search, ShieldCheck,
-  ShoppingBag, ShoppingCart, ScanLine, Trash2, UserRound, UserRoundPlus, Users,
+  ShoppingBag, ShoppingCart, ScanLine, Tags, Trash2, UserRound, UserRoundPlus, Users,
   Wallet, X, Zap,
 } from 'lucide-react';
 import { hashPassword, verifyPassword } from './auth';
-import { loadData, saveData } from './storage';
-import type { AppData, ClassSession, Member, MemberStatus, Payment, Product, StaffUser } from './types';
+import { DEFAULT_PLANS, loadData, saveData } from './storage';
+import type { AppData, ClassSession, GymPlan, Member, MemberStatus, Payment, Product, StaffUser } from './types';
 
 type Area = 'portal' | 'owner';
-type OwnerPage = 'dashboard' | 'members' | 'inventory' | 'payments' | 'classes' | 'pos' | 'checkin' | 'team';
+type OwnerPage = 'dashboard' | 'members' | 'inventory' | 'payments' | 'classes' | 'pos' | 'checkin' | 'team' | 'plans';
 type PortalPage = 'plans' | 'membership' | 'classes' | 'payments';
 type Toast = { id: number; message: string; kind: 'success' | 'error' };
 type ClassInfo = Omit<ClassSession, 'date'>;
 type CartLine = { id: number; quantity: number };
-
-const PLAN_OPTIONS = [
-  { name: 'Pase Diario', days: 1, duration: '1 día', price: 10, description: 'Un día completo para conocer el gimnasio.', featured: false, benefits: ['Acceso a máquinas y pesas', 'Casillero y ducha'] },
-  { name: 'Plan Mensual', days: 30, duration: '30 días', price: 60, description: 'Constancia que se convierte en resultados.', featured: true, benefits: ['Acceso durante el horario del gimnasio', 'Evaluación física inicial', 'Acceso a clases grupales'] },
-  { name: 'Plan Trimestral', days: 90, duration: '90 días', price: 150, description: 'Entrena a largo plazo y ahorra en tu membresía.', featured: false, benefits: ['Acceso durante el horario del gimnasio', 'Asesoría nutricional inicial', 'Mejor precio por mes'] },
-];
 
 const CLASS_INFO: ClassInfo[] = [
   { name: 'Fuerza & acondicionamiento', coach: 'Entrenamiento funcional', time: '07:00', day: 1, level: 'Todos los niveles', icon: 'dumbbell' },
@@ -34,6 +28,7 @@ const CLASS_INFO: ClassInfo[] = [
 ];
 
 const CATEGORIES = ['Todos', 'Proteínas y Ganadores', 'Creatinas y Pre-entrenos', 'Bebidas e Hidratantes', 'Snacks y Alimentos', 'Accesorios / Merch'];
+const LEGACY_PLAN_DAYS: Record<string, number> = { 'Plan Trimestral': 90, 'Plan Anual': 365 };
 
 const today = () => new Date().toISOString().slice(0, 10);
 const makeId = () => Date.now() + Math.floor(Math.random() * 1000);
@@ -127,7 +122,8 @@ export default function App() {
   const [paymentDni, setPaymentDni] = useState('');
   const [bookingDni, setBookingDni] = useState('');
   const [bookingClass, setBookingClass] = useState<ClassSession | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<(typeof PLAN_OPTIONS)[number] | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<GymPlan | null>(null);
+  const [editingPlan, setEditingPlan] = useState<GymPlan | null>(null);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingUser, setEditingUser] = useState<StaffUser | null>(null);
@@ -154,15 +150,17 @@ export default function App() {
     window.setTimeout(() => setToasts(current => current.filter(toast => toast.id !== id)), 3500);
   }
 
-  function commit(update: (current: AppData) => AppData, success?: string) {
+  function commit(update: (current: AppData) => AppData, success?: string): boolean {
     const next = update(data);
     try {
       saveData(next);
       setData(next);
       if (success) notify(success);
+      return true;
     } catch (error) {
       console.error('No se pudieron guardar los cambios localmente.', error);
       notify('No se pudieron guardar los cambios. Revisa el espacio disponible del navegador.', 'error');
+      return false;
     }
   }
 
@@ -317,7 +315,7 @@ export default function App() {
   }), [data.inventory, inventorySearch, category, lowStock]);
 
   function switchOwnerPage(page: OwnerPage) {
-    if (!isAdmin && ['dashboard', 'inventory', 'payments', 'classes', 'team'].includes(page)) {
+    if (!isAdmin && ['dashboard', 'inventory', 'payments', 'classes', 'team', 'plans'].includes(page)) {
       notify('Esta sección requiere permisos de administrador.', 'error');
       return;
     }
@@ -378,15 +376,20 @@ export default function App() {
       notify('Ya existe un socio con ese DNI.', 'error');
       return;
     }
-    const planInfo = PLAN_OPTIONS.find(option => option.name === plan) ?? PLAN_OPTIONS[1];
-    const member: Member = { id: isEditing ? editingMember!.id : makeId(), name, dni, phone, plan, start, end: getEndDate(start, planInfo.days), status };
+    const planInfo = data.plans.find(option => option.name === plan);
+    if (!planInfo && (!isEditing || plan !== editingMember?.plan)) return notify('Selecciona uno de los planes disponibles.', 'error');
+    const member: Member = {
+      id: isEditing ? editingMember!.id : makeId(), name, dni, phone, plan, start,
+      end: planInfo ? getEndDate(start, planInfo.days) : editingMember!.end,
+      status,
+    };
     commit(current => {
       const members = isEditing
         ? current.members.map(item => item.id === member.id ? member : item)
         : [member, ...current.members];
       const transactions = isEditing ? current.transactions : [{
         id: `TRX-${makeId()}`, date: today(), time: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
-        concept: `Inscripción: ${plan} (${name})`, staff: activeUser?.fullname ?? 'Equipo', method: 'Efectivo', total: planInfo.price,
+        concept: `Inscripción: ${plan} (${name})`, staff: activeUser?.fullname ?? 'Equipo', method: 'Efectivo', total: planInfo?.price ?? 0,
       }, ...current.transactions];
       return { ...current, members, transactions };
     }, editingMember ? 'Socio actualizado.' : 'Socio registrado y pago contabilizado.');
@@ -476,11 +479,12 @@ export default function App() {
 
   function approvePayment(payment: Payment) {
     const start = today();
-    const plan = PLAN_OPTIONS.find(option => option.name === payment.plan) ?? PLAN_OPTIONS[1];
+    const planDays = data.plans.find(option => option.name === payment.plan)?.days ?? LEGACY_PLAN_DAYS[payment.plan];
+    if (!planDays) return notify(`No se puede determinar la duración del plan "${payment.plan}". Revisa esta solicitud antes de aprobarla.`, 'error');
     const member: Member = {
       id: data.members.find(existing => existing.dni === payment.dni)?.id ?? makeId(),
       name: payment.name, dni: payment.dni, phone: payment.phone, plan: payment.plan,
-      start, end: getEndDate(start, plan.days), status: 'Activo',
+      start, end: getEndDate(start, planDays), status: 'Activo',
     };
     commit(current => ({
       ...current,
@@ -642,6 +646,33 @@ export default function App() {
     commit(current => ({ ...current, users: current.users.filter(item => item.id !== user.id) }), 'Usuario eliminado.');
   }
 
+  function savePlanForm(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingPlan) return;
+    const form = new FormData(event.currentTarget);
+    const price = Number(form.get('price'));
+    const description = String(form.get('description') || '').trim();
+    const benefits = [...new Set(String(form.get('benefits') || '')
+      .split('\n')
+      .map(benefit => benefit.trim())
+      .filter(Boolean))];
+    if (!Number.isFinite(price) || price < 0 || !description || !benefits.length) {
+      notify('Ingresa un precio válido, una descripción y al menos un beneficio.', 'error');
+      return;
+    }
+    const updatedPlan: GymPlan = { ...editingPlan, price, description, benefits };
+    const saved = commit(current => ({
+      ...current,
+      plans: current.plans.map(plan => plan.name === editingPlan.name ? updatedPlan : plan),
+    }), `${editingPlan.name} actualizado.`);
+    if (saved) setEditingPlan(null);
+  }
+
+  function restoreDefaultPlans() {
+    if (!window.confirm('¿Restaurar precios, descripciones y beneficios iniciales?')) return;
+    commit(current => ({ ...current, plans: DEFAULT_PLANS }), 'Se restauraron los planes iniciales.');
+  }
+
   const navItems: Array<{ id: OwnerPage; label: string; icon: ReactNode; adminOnly?: boolean }> = [
     { id: 'dashboard', label: 'Resumen', icon: <LayoutDashboard size={18} />, adminOnly: true },
     { id: 'members', label: 'Socios', icon: <Users size={18} /> },
@@ -651,6 +682,7 @@ export default function App() {
     { id: 'pos', label: 'Punto de venta', icon: <ShoppingCart size={18} /> },
     { id: 'checkin', label: 'Control de acceso', icon: <ScanLine size={18} /> },
     { id: 'team', label: 'Equipo', icon: <ShieldCheck size={18} />, adminOnly: true },
+    { id: 'plans', label: 'Planes y precios', icon: <Tags size={18} />, adminOnly: true },
   ];
 
   return <div className="app-shell">
@@ -716,13 +748,13 @@ export default function App() {
 
         {portalPage === 'plans' && <>
           <div className="plan-grid">
-            {PLAN_OPTIONS.map(plan => <article key={plan.name} className={`plan-card ${plan.featured ? 'featured' : ''}`}>
+            {data.plans.map(plan => <article key={plan.name} className={`plan-card ${plan.featured ? 'featured' : ''}`}>
               {plan.featured && <span className="plan-ribbon">EL MÁS ELEGIDO</span>}
               <span className="plan-duration">{plan.duration}</span>
               <h3>{plan.name}</h3>
               <p>{plan.description}</p>
-              <div className="plan-price">{money(plan.price)}<small> / {plan.days === 1 ? 'día' : `${plan.days} días`}</small></div>
-              <ul>{plan.benefits.map(benefit => <li key={benefit}><Check size={16} />{benefit}</li>)}</ul>
+              <div className="plan-price">{money(plan.price)}<small> / {plan.duration}</small></div>
+              <ul>{plan.benefits.map((benefit, index) => <li key={`${plan.name}-${index}`}><Check size={16} />{benefit}</li>)}</ul>
               <button className={`button ${plan.featured ? 'button-primary' : 'button-secondary'}`} onClick={() => setSelectedPlan(plan)}>Elegir plan <ArrowRight size={16} /></button>
             </article>)}
           </div>
@@ -909,6 +941,18 @@ export default function App() {
           </section>
           <p className="security-note"><ShieldCheck size={17} /> Las contraseñas se guardan como hash en este navegador, pero el panel y sus datos siguen siendo locales. La autenticación y los permisos deben validarse en un servidor antes de usarlo con información real.</p>
         </section>}
+
+        {ownerPage === 'plans' && <section className="owner-content">
+          <PageHeading eyebrow="OFERTA DEL GIMNASIO" title="Planes y precios" description="Edita el precio, la descripción y los beneficios que aparecen en el portal de socios." action={<button className="button button-secondary" onClick={restoreDefaultPlans}>Restaurar iniciales</button>} />
+          <div className="admin-plan-grid">{data.plans.map(plan => <article className={`admin-plan-card ${plan.featured ? 'featured' : ''}`} key={plan.name}>
+            <div className="admin-plan-top"><span className="plan-duration">{plan.duration}</span>{plan.featured && <Badge tone="gold">Más elegido</Badge>}</div>
+            <h2>{plan.name}</h2>
+            <strong className="admin-plan-price">{money(plan.price)}</strong>
+            <p>{plan.description}</p>
+            <ul>{plan.benefits.map((benefit, index) => <li key={`${plan.name}-${index}`}><Check size={15} />{benefit}</li>)}</ul>
+            <button className="button button-secondary" onClick={() => setEditingPlan(plan)}><Pencil size={15} /> Editar plan</button>
+          </article>)}</div>
+        </section>}
       </main>
     </div>}
 
@@ -966,7 +1010,7 @@ export default function App() {
         <label className="input-label full-span">Nombre completo<input name="name" required defaultValue={editingMember.name} maxLength={100} /></label>
         <label className="input-label">DNI<input name="dni" inputMode="numeric" minLength={8} maxLength={12} pattern="[0-9]{8,12}" defaultValue={editingMember.dni} /></label>
         <label className="input-label">Teléfono<input name="phone" required defaultValue={editingMember.phone} maxLength={30} /></label>
-        <label className="input-label">Plan<select name="plan" defaultValue={editingMember.plan}>{PLAN_OPTIONS.map(plan => <option key={plan.name}>{plan.name}</option>)}</select></label>
+        <label className="input-label">Plan<select name="plan" defaultValue={editingMember.plan}>{!data.plans.some(plan => plan.name === editingMember.plan) && <option value={editingMember.plan}>{editingMember.plan} (anterior)</option>}{data.plans.map(plan => <option key={plan.name}>{plan.name}</option>)}</select></label>
         <label className="input-label">Inicio<input name="start" type="date" required defaultValue={editingMember.start} /></label>
         <label className="input-label full-span">Estado<select name="status" defaultValue={editingMember.status}><option>Activo</option><option>Por Vencer</option><option>Vencido</option></select></label>
         <div className="form-actions full-span"><button type="button" className="button button-secondary" onClick={() => setEditingMember(null)}>Cancelar</button><button className="button button-primary">Guardar socio</button></div>
@@ -982,6 +1026,17 @@ export default function App() {
         <label className="input-label">Costo<input name="cost" type="number" min="0" step="0.01" required defaultValue={editingProduct.cost} /></label>
         <label className="input-label">Precio de venta<input name="price" type="number" min="0" step="0.01" required defaultValue={editingProduct.price} /></label>
         <div className="form-actions full-span"><button type="button" className="button button-secondary" onClick={() => setEditingProduct(null)}>Cancelar</button><button className="button button-primary">Guardar producto</button></div>
+      </form>
+    </Modal>}
+
+    {editingPlan && <Modal title={`Editar ${editingPlan.name}`} onClose={() => setEditingPlan(null)}>
+      <p className="modal-subtitle">Los cambios se reflejan en el portal de socios y en las nuevas solicitudes.</p>
+      <form className="form-grid" onSubmit={savePlanForm}>
+        <label className="input-label">Duración<input value={editingPlan.duration} readOnly /></label>
+        <label className="input-label">Precio (S/)<input name="price" type="number" min="0" step="0.01" required defaultValue={editingPlan.price} /></label>
+        <label className="input-label full-span">Descripción<textarea name="description" rows={3} required maxLength={240} defaultValue={editingPlan.description} /></label>
+        <label className="input-label full-span">Beneficios (uno por línea)<textarea name="benefits" rows={4} required maxLength={500} defaultValue={editingPlan.benefits.join('\n')} /></label>
+        <div className="form-actions full-span"><button type="button" className="button button-secondary" onClick={() => setEditingPlan(null)}>Cancelar</button><button className="button button-primary">Guardar cambios</button></div>
       </form>
     </Modal>}
 

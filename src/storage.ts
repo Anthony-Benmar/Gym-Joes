@@ -1,4 +1,4 @@
-import type { AppData, ClassBooking, Member, Payment, Product, StaffUser, StockMovement, Transaction } from './types';
+import type { AppData, ClassBooking, GymPlan, Member, Payment, Product, StaffUser, StockMovement, Transaction } from './types';
 
 const STORAGE_KEYS = {
   members: 'gym_members',
@@ -8,7 +8,15 @@ const STORAGE_KEYS = {
   bookings: 'gym_class_bookings',
   stockMovements: 'gym_stock_movements',
   users: 'gym_users',
+  plans: 'gym_plans',
 } as const;
+
+export const DEFAULT_PLANS: GymPlan[] = [
+  { name: 'Pase Diario', days: 1, duration: '1 día', price: 7, description: 'Entrena hoy y accede a las máquinas del gimnasio.', featured: false, benefits: ['Acceso a máquinas'] },
+  { name: 'Plan Mensual', days: 30, duration: '1 mes', price: 70, description: 'Un mes de entrenamiento con un plan personalizado para ti.', featured: true, benefits: ['Acceso a máquinas', 'Plan personalizado'] },
+  { name: 'Plan 2 Meses', days: 60, duration: '2 meses', price: 130, description: 'Dos meses de entrenamiento con un plan personalizado para ti.', featured: false, benefits: ['Acceso a máquinas', 'Plan personalizado'] },
+  { name: 'Plan 4 Meses', days: 120, duration: '4 meses', price: 250, description: 'Cuatro meses de entrenamiento con acompañamiento nutricional inicial.', featured: false, benefits: ['Acceso a máquinas', 'Plan personalizado', 'Asesoría nutricional inicial'] },
+];
 
 const today = () => new Date().toISOString().slice(0, 10);
 const addDays = (days: number) => {
@@ -19,7 +27,7 @@ const addDays = (days: number) => {
 
 const initialData: AppData = {
   members: [
-    { id: 1, name: 'Carlos Mendoza', dni: '70451238', phone: '+51 987 654 321', plan: 'Plan Trimestral', start: addDays(-74), end: addDays(16), status: 'Activo' },
+    { id: 1, name: 'Carlos Mendoza', dni: '70451238', phone: '+51 987 654 321', plan: 'Plan 2 Meses', start: addDays(-44), end: addDays(16), status: 'Activo' },
     { id: 2, name: 'Sofía Rivas', dni: '71930456', phone: '+51 912 345 678', plan: 'Plan Mensual', start: addDays(-25), end: addDays(5), status: 'Por Vencer' },
     { id: 3, name: 'Diego Vargas', dni: '72841063', phone: '+51 955 443 322', plan: 'Pase Diario', start: today(), end: today(), status: 'Activo' },
     { id: 4, name: 'Valeria Gómez', dni: '73625104', phone: '+51 933 221 100', plan: 'Plan Anual', start: addDays(-120), end: addDays(245), status: 'Activo' },
@@ -41,12 +49,13 @@ const initialData: AppData = {
   ],
   transactions: [
     { id: 'TRX-8941', date: today(), time: '10:24', concept: 'Venta: Whey Protein Isolate 5lb', staff: 'Lucía R. (Staff)', method: 'Tarjeta', total: 95 },
-    { id: 'TRX-8940', date: today(), time: '09:45', concept: 'Inscripción: Plan Trimestral (Carlos M.)', staff: 'Mariano (Dueño)', method: 'Efectivo', total: 150 },
+    { id: 'TRX-8940', date: today(), time: '09:45', concept: 'Inscripción: Plan 2 Meses (Carlos M.)', staff: 'Mariano (Dueño)', method: 'Efectivo', total: 130 },
     { id: 'TRX-8939', date: today(), time: '09:12', concept: 'Venta: Agua Mineral + Barra Proteica', staff: 'Lucía R. (Staff)', method: 'Yape / Plin', total: 5 },
   ],
   payments: [],
   bookings: [],
   stockMovements: [],
+  plans: DEFAULT_PLANS,
   users: [
     { id: 1, fullname: 'Mariano CEO', username: 'mariano', role: 'admin', status: 'Activo' },
     { id: 2, fullname: 'Lucía R. Rivas', username: 'lucia', role: 'staff', status: 'Activo' },
@@ -84,6 +93,7 @@ export function loadData(): AppData {
     bookings: readKey<ClassBooking[]>(STORAGE_KEYS.bookings, initialData.bookings),
     stockMovements: readKey<StockMovement[]>(STORAGE_KEYS.stockMovements, initialData.stockMovements),
     users: readKey<StaffUser[]>(STORAGE_KEYS.users, initialData.users),
+    plans: readKey<GymPlan[]>(STORAGE_KEYS.plans, DEFAULT_PLANS),
   };
 }
 
@@ -96,6 +106,7 @@ export function saveData(data: AppData): void {
     [STORAGE_KEYS.bookings]: JSON.stringify(data.bookings),
     [STORAGE_KEYS.stockMovements]: JSON.stringify(data.stockMovements),
     [STORAGE_KEYS.users]: JSON.stringify(data.users),
+    [STORAGE_KEYS.plans]: JSON.stringify(data.plans),
     gym_pending_subscriptions: JSON.stringify(data.payments.filter(payment => payment.status === 'Pendiente')),
   };
   const previous = new Map<string, string | null>();

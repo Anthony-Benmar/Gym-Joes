@@ -78,6 +78,16 @@ export interface StaffUser {
   status: 'Activo' | 'Inactivo';
 }
 
+export interface GymPlan {
+  name: string;
+  days: number;
+  duration: string;
+  price: number;
+  description: string;
+  featured: boolean;
+  benefits: string[];
+}
+
 export interface AppData {
   members: Member[];
   inventory: Product[];
@@ -86,6 +96,7 @@ export interface AppData {
   bookings: ClassBooking[];
   stockMovements: StockMovement[];
   users: StaffUser[];
+  plans: GymPlan[];
 }
 
 export type ClassSession = {

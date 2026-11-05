@@ -24,4 +24,6 @@ La aplicación conserva la integración de demostración con las claves `gym_*` 
 
 Al abrir **Gestión del gimnasio** por primera vez, selecciona **Mariano CEO** en el menú **Acceso personal** e ingresa el usuario `mariano`; se te pedirá crear su contraseña. Después, un administrador puede dar de alta al equipo desde **Equipo** y asignarle un usuario y una contraseña inicial.
 
+Los precios, descripciones y beneficios de los planes se administran desde **Gestión del gimnasio → Planes y precios**. Los cambios se guardan en el navegador y aparecen en el portal de socios.
+
 Esta autenticación es solo una demostración local: los hashes se guardan en el navegador, y el panel, los permisos y los datos pueden ser manipulados desde el cliente. No uses contraseñas reutilizadas ni información real. Para producción, conecta una API con autenticación, autorización y almacenamiento seguros en el servidor.
